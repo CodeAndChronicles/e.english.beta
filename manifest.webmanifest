@@ -1,0 +1,20 @@
+{
+  "name": "E.English",
+  "short_name": "E.English",
+  "description": "Study English vocabulary, synonyms and antonyms, idioms and phrasal verbs, and derivatives — online or offline.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F4F4",
+  "theme_color": "#F4F4F4",
+  "icons": [
+    {
+      "src": "Ui/Logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

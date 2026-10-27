@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+  <title>E.English</title>
+  <meta name="description" content="E.English helps you study English vocabulary, synonyms and antonyms, idioms and phrasal verbs, and word derivatives — with quizzes, review lists and progress tracking that work offline." />
+  <meta name="theme-color" content="#F4F4F4" id="meta-theme-color" />
+  <link rel="icon" type="image/png" href="Ui/Logo.png" />
+  <link rel="apple-touch-icon" href="Ui/Logo.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- Open Graph / social preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="E.English" />
+  <meta property="og:title" content="E.English" />
+  <meta property="og:description" content="Study English vocabulary, synonyms and antonyms, idioms and phrasal verbs, and derivatives — with quizzes, review lists and progress tracking, online or offline." />
+  <meta property="og:image" content="Ui/Logo.png" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="E.English" />
+  <meta name="twitter:description" content="Study English vocabulary with quizzes, review lists and progress tracking — online or offline." />
+  <meta name="twitter:image" content="Ui/Logo.png" />
+
+  <link rel="stylesheet" href="CSS/root.css" />
+  <link rel="stylesheet" href="CSS/responsive.css" />
+  <link rel="stylesheet" href="CSS/animations.css" />
+  <link rel="stylesheet" href="CSS/settings.css" />
+
+  <!-- Every icon in the app is a local, self-contained SVG (JavaScript/icons.js) —
+       no CDN / external network request is needed to render the UI. -->
+</head>
+<body>
+  <div id="app">
+    <!-- Floating capsule (language + theme): separate from the navigation bar. A round
+         button and a rounded-rectangle button share one pill, like a small "island". -->
+    <div id="float-controls" class="float-controls" role="group" aria-label="Language and theme">
+      <button id="theme-toggle-btn" class="float-btn float-btn-round theme-toggle-btn" type="button" aria-label="Theme"></button>
+      <button id="lang-toggle-btn" class="float-btn float-btn-wide lang-toggle-btn" type="button" aria-label="Language"></button>
+    </div>
+    <main id="screen-container"></main>
+    <nav id="bottom-nav" class="bottom-nav" hidden>
+      <button class="nav-btn" data-nav="home">
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" data-nav="statistics">
+        <span>Statistics</span>
+      </button>
+      <button class="nav-btn" data-nav="history" aria-label="Quiz History">
+        <span>History</span>
+      </button>
+      <button class="nav-btn" data-nav="settings">
+        <span>Settings</span>
+      </button>
+      <button class="nav-btn" data-nav="info">
+        <span>Info</span>
+      </button>
+      <button class="nav-btn" data-nav="feedback">
+        <span>Feedback</span>
+      </button>
+      <button class="nav-btn" data-nav="readme">
+        <span>README</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- version.js first: it defines the app version (EE_MODEL_VERSION) and the JavaScript
+       loading version (EE_JS_VERSION). The app scripts are then requested as "<file>.js?js=<EE_JS_VERSION>",
+       in order, so the JavaScript loading version is part of every script URL (and of the cache name in sw.js). -->
+  <script src="JavaScript/version.js"></script>
+  <script>
+    (function () {
+      var q = '?js=' + (window.EE_JS_VERSION || '0');
+      var files = ['icons', 'i18n', 'quiz-engine', 'ux', 'ui', 'settings', 'readme', 'pages'];   // order matters: i18n before ux (ux applies the saved language), quiz-engine before ux, ux before ui
+      var left = files.length;
+      files.forEach(function (name) {
+        var s = document.createElement('script');
+        s.src = 'JavaScript/' + name + '.js' + q;
+        s.async = false;                                   // injected scripts still run in this order
+        s.onload = function () { if (--left === 0) UI.init(); };
+        s.onerror = function () { console.error('[E.English] could not load ' + s.src); };
+        document.body.appendChild(s);
+      });
+    })();
+    if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
+      // Version updates (new or older model version): UX.startUpdateWatcher() — started
+      // from UI.init() — owns the refresh cycle, including the refreshTimes anti-loop guard.
+      window.addEventListener('load', function () {
+        // updateViaCache:'none' → the worker's imported version.js is re-checked on
+        // the network every time, so a version bump (forward OR backward) is seen
+        // immediately instead of after the HTTP cache expires.
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(function () {});
+      });
+    }
+  </script>
+</body>
+</html>
