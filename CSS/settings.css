@@ -1,0 +1,219 @@
+/* settings.css — Settings screen only (theme picker, keep-awake, data
+   actions) + the toast used to confirm export/import/delete — see
+   JavaScript/settings.js for the matching markup.
+
+   Type scale used here (so the page has a clear hierarchy):
+     section title 18px/700 · row title 15.5px/600 · description 13.5px muted
+     · control labels 13.5px. Spacing runs on an 8px rhythm: rows 16px,
+     cards 24px, sections 32px. Touch targets are >= 44px. */
+
+/* ---- Section titles + rhythm ---- */
+
+.settings-card {
+  display: flex; flex-direction: column;
+  padding: var(--sp-2xs) var(--sp-lg);
+  margin-bottom: var(--sp-xl);
+  border-radius: var(--r-lg);
+}
+.settings-row {
+  display: flex; align-items: center; gap: var(--sp-md);
+  padding: var(--sp-md) 0;
+  min-height: 72px;
+  border-bottom: 1px solid var(--color-border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row-block { flex-wrap: wrap; }
+.settings-row-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: var(--r-md);
+  background: var(--tone-bg, var(--color-mint)); color: var(--tone, var(--color-ink)); flex-shrink: 0;
+}
+.settings-row-icon .icon { width: 20px; height: 20px; }
+.settings-row-text { flex: 1; min-width: 0; }
+.settings-row-title { font-size: var(--font-size-md); font-weight: var(--fw-medium); line-height: 1.3; }
+.settings-row-sub { font-size: var(--font-size-sm); color: var(--color-text-muted); margin-top: 2px; line-height: 1.45; }
+
+/* ---- Light / Dark / System segmented control ---- */
+.segmented {
+  position: relative; display: inline-flex; background: var(--role-control);
+  border-radius: var(--r-pill); padding: 3px; flex-shrink: 0;
+  --i: 0; --n: 3;
+}
+/* The selected pill: one element that SLIDES to the active option (the buttons
+   themselves stay transparent). It follows the reading direction. */
+.seg-thumb {
+  position: absolute; z-index: 0; top: 3px; bottom: 3px; inset-inline-start: 3px;
+  width: calc((100% - 6px) / var(--n));
+  border-radius: var(--r-pill); background: var(--role-accent);
+  transform: translateX(calc(var(--i) * 100%));
+  transition: transform var(--t-med) var(--ease-out);
+  pointer-events: none;
+}
+[dir="rtl"] .seg-thumb { transform: translateX(calc(var(--i) * -100%)); }
+.segmented-btn { position: relative; z-index: 1; }
+.segmented-btn {
+  padding: var(--sp-xs) var(--sp-md); border-radius: var(--r-pill);
+  min-height: 40px;
+  font-size: var(--font-size-sm); font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+}
+.segmented-btn:hover:not(.active) { color: var(--color-text); }
+.segmented-btn.active { color: var(--role-on-accent); }
+.segmented-btn.active .segmented-sub { opacity: 0.9; }
+.segmented-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.segmented-icon { width: 18px; height: 18px; }
+.segmented-sub { font-family: var(--font-en); font-size: 10px; font-weight: var(--fw-regular); opacity: 0.8; line-height: 1.2; }
+.segmented-btn:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+/* Full-width variant: three equal buttons under the row title. */
+.settings-row-flush { border-bottom: none; padding-bottom: var(--sp-sm); min-height: 0; }
+.settings-seg-wrap { padding-bottom: var(--sp-md); border-bottom: 1px solid var(--color-border); }
+.segmented-full { display: flex; width: 100%; max-width: 360px; padding: 3px; }
+.segmented-full .seg-thumb { top: 3px; bottom: 3px; inset-inline-start: 3px; width: calc((100% - 6px) / var(--n)); }
+/* Font style buttons preview their own weight. */
+.segmented-font .segmented-btn[data-value="regular"] { font-weight: 400; }
+.segmented-font .segmented-btn[data-value="bold"], .segmented-font .segmented-btn[data-value="o2"] { font-weight: 700; }
+.font-help { list-style: none; margin: var(--sp-sm) 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--font-size-sm); color: var(--color-text-muted); line-height: 1.5; }
+.font-help strong { color: var(--color-text); font-weight: var(--fw-head); }
+.font-help-tag { margin-inline-start: 6px; padding: 0 7px; border-radius: var(--r-pill); background: var(--color-mint); color: var(--color-ink); font-size: var(--font-size-xs); }
+.segmented-full .segmented-btn { flex: 1; min-width: 0; padding: var(--sp-xs) var(--sp-xs); white-space: nowrap; }
+
+/* ---- Accent color picker: Default + six palettes (7 choices) ---- */
+.theme-color-picker { width: 100%; display: flex; flex-direction: column; gap: var(--sp-sm); padding-bottom: var(--sp-md); }
+.theme-color-group-title { font-size: var(--font-size-xs); font-weight: var(--fw-bold); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 var(--sp-xs); }
+.theme-color-swatch {
+  display: flex; align-items: center; gap: var(--sp-xs); width: 100%;
+  padding: var(--sp-sm) var(--sp-md); min-height: 48px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--r-md);
+  background: var(--color-surface);
+  text-align: start;
+}
+.theme-color-swatch:hover { background: var(--color-surface-alt); }
+.theme-color-swatch:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+.theme-color-swatch.active { border-color: var(--color-ink); background: var(--color-mint); }
+.swatch-dot { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12); }
+/* Swatches show each palette's own light-mode fill. */
+.swatch-burgundy { background: #7A1F32; }
+.swatch-lavender { background: #6B4FBB; }
+.swatch-sky { background: #1E72BA; }
+.swatch-lime { background: #4D7C0F; }
+.swatch-orange { background: #B24500; }
+.swatch-teal { background: #0B7A75; }
+/* Default = neutral graphite. */
+.swatch-default { background: #3F4A57; }
+/* A palette from an earlier version that is no longer offered: still shown as the current one. */
+.swatch-midnight { background: #24407A; }
+.swatch-plum { background: #6E2F63; }
+.swatch-petrol { background: #0F5C6B; }
+.swatch-umber { background: #5E3D2B; }
+.swatch-rose { background: #E39AB6; }
+.swatch-sand { background: #D9B679; }
+.palette-retired-note { margin: 0; padding: var(--sp-xs) var(--sp-sm); border-radius: var(--r-md); background: var(--color-surface-alt); color: var(--color-text-muted); font-size: var(--font-size-sm); display: flex; align-items: center; gap: var(--sp-xs); }
+.swatch-label { font-size: var(--font-size-sm); }
+
+/* ---- Toggle switch (keep screen awake) ---- */
+.switch { position: relative; display: inline-block; width: 52px; height: 32px; flex-shrink: 0; cursor: pointer; }
+.switch::before { content: ''; position: absolute; inset: -6px -4px; } /* 44px touch area */
+.switch-track {
+  position: absolute; inset: 0; border-radius: var(--r-pill);
+  background: var(--color-disabled);
+}
+.switch-track::after {
+  content: ''; position: absolute; top: 3px; inset-inline-start: 3px;
+  width: 26px; height: 26px; border-radius: 50%; background: var(--role-surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--t-fast) var(--ease-out);
+}
+.switch-input:checked ~ .switch-track { background: var(--color-primary); }
+.switch-input:checked ~ .switch-track::after { transform: translateX(20px); }
+[dir="rtl"] .switch-input:checked ~ .switch-track::after { transform: translateX(-20px); }
+.switch-input:focus-visible ~ .switch-track { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+
+/* ---- Data action buttons ---- */
+.settings-action-btn { width: 100%; min-height: 52px; margin: var(--sp-xs) 0; justify-content: flex-start; font-size: var(--font-size-md); }
+.settings-action-btn:first-of-type { margin-top: var(--sp-md); }
+.settings-action-btn:last-of-type { margin-bottom: var(--sp-md); }
+
+/* ---- Toast ---- */
+.settings-toast {
+  position: fixed; bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + var(--sp-md));
+  inset-inline-start: 50%; transform: translate(-50%, 12px);
+  background: var(--color-text); color: var(--color-bg);
+  padding: var(--sp-sm) var(--sp-lg); border-radius: var(--r-pill);
+  font-size: var(--font-size-sm); font-weight: var(--fw-medium);
+  box-shadow: var(--shadow-md);
+  opacity: 0; transition: opacity var(--t-med) var(--ease-out), transform var(--t-med) var(--ease-out);
+  z-index: 300; max-width: calc(100% - var(--sp-lg) * 2); text-align: center;
+}
+.settings-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.settings-toast-warn { background: var(--color-review); color: var(--color-bg); }
+
+/* Seven palette choices: 2 columns on phones, 4 on wider screens. */
+@media (min-width: 600px) {
+  .theme-color-grid { grid-template-columns: repeat(4, 1fr); }
+  .theme-color-swatch { padding-inline: var(--sp-sm); }
+}
+
+/* ---- Advanced: collapsed disclosure ---- */
+
+/* ---- Advanced: device info ---- */
+
+/* Desktop: two cards side by side use the wide space; toast clears the
+   side nav instead of sitting above a bottom nav that isn't there. */
+@media (min-width: 1024px) {
+  .settings-toast { bottom: var(--sp-xl); }
+  .settings-action-btn { width: auto; min-width: 280px; }
+}
+
+/* ---- Phones: tighter card padding, controls never overflow ---- */
+@media (max-width: 479px) {
+  .settings-card { padding-inline: var(--sp-md); }
+  .settings-row { gap: var(--sp-sm); }
+  .settings-row-icon { width: 36px; height: 36px; }
+  .segmented-full { max-width: none; }
+  .settings-section-title { font-size: var(--font-size-md); }
+}
+@media (max-width: 359px) {
+  .theme-color-swatch { padding-inline: var(--sp-sm); gap: 6px; }
+}
+
+/* ---- Language row (Settings): two native-name buttons ---- */
+.segmented-lang .segmented-btn { font-family: var(--font-main); }
+[dir="rtl"] .settings-toast { transform: translate(50%, 12px); }
+[dir="rtl"] .settings-toast.show { transform: translate(50%, 0); }
+@media (prefers-reduced-motion: reduce) { .switch-track::after, .settings-toast { transition: none; } }
+
+
+/* ---- Accent color: one compact row of round swatches ---- */
+.theme-color-picker { gap: var(--sp-xs); padding-bottom: var(--sp-sm); }
+.palette-row { display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
+.palette-row .theme-color-swatch {
+  width: 40px; height: 40px; min-height: 0; padding: 0; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid transparent; background: transparent;
+  transition: border-color var(--t-fast) ease, transform var(--t-fast) ease;
+}
+.palette-row .theme-color-swatch.active { border-color: var(--role-accent-text); background: transparent; transform: scale(1.06); }
+.palette-row .swatch-dot { width: 26px; height: 26px; }
+.palette-name { font-size: var(--font-size-sm); color: var(--role-text-muted); min-height: 1.4em; }
+
+/* ---- Animations row: a tiny preview next to the switch ---- */
+.anim-controls { display: inline-flex; align-items: center; gap: var(--sp-sm); }
+.anim-demo { position: relative; width: 44px; height: 20px; border-radius: var(--r-pill); background: var(--role-control); overflow: hidden; flex-shrink: 0; }
+.anim-demo-dot { position: absolute; top: 4px; inset-inline-start: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--role-accent); }
+.anim-demo.playing .anim-demo-dot { animation: anim-demo-slide 1.4s var(--ease-out) infinite alternate; }
+@keyframes anim-demo-slide { from { transform: translateX(0); } to { transform: translateX(24px); } }
+[dir="rtl"] .anim-demo.playing .anim-demo-dot { animation-name: anim-demo-slide-rtl; }
+@keyframes anim-demo-slide-rtl { from { transform: translateX(0); } to { transform: translateX(-24px); } }
+.anim-note { padding: 0 var(--sp-md) var(--sp-sm); }
+
+/* ---- Local storage indicator ---- */
+.storage-row { align-items: flex-start; }
+.storage-bar { height: 8px; margin: var(--sp-xs) 0 4px; }
+.storage-text { font-size: var(--font-size-sm); font-variant-numeric: tabular-nums; }
+.storage-note { font-size: var(--font-size-xs); }
+
+.palette-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; max-width: 360px; }
+.palette-row .theme-color-swatch { width: 100%; max-width: 44px; height: auto; aspect-ratio: 1; justify-self: center; }
+.palette-row .swatch-dot { width: 62%; height: 62%; }
+.settings-card > .settings-seg-wrap:last-child, .settings-card > .settings-row:last-child { border-bottom: none; }

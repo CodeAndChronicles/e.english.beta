@@ -1,0 +1,1187 @@
+/* responsive.css — All layout/component styling + responsive breakpoints.
+   Rewritten pass: consistent spacing scale everywhere (no ad-hoc px),
+   Arabic/English font split (see --font-main / --font-en in root.css),
+   a bottom nav that behaves on every screen size (incl. iOS safe-area),
+   and the new quiz / settings / POS-badge pieces added on top without
+   touching the class names ui.js / settings.js already depend on. */
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: var(--font-main);
+  font-size: var(--font-size-md);
+  font-weight: var(--fw-body); /* normal text; headings use --fw-head (see root.css font system) */
+  color: var(--color-text);
+  background: var(--color-bg);
+  /* direction comes from <html dir="ltr|rtl"> (set by ui.js from the chosen language) */
+}
+/* Headings follow the heading role; form controls follow the body role. */
+h1, h2, h3, h4, h5, h6 { font-weight: var(--fw-head); }
+/* Layout-stability guards: reserve the scrollbar gutter (no horizontal
+   jump when a screen becomes scrollable), never scroll sideways, and let
+   long words/URLs wrap instead of stretching a card. */
+html { scrollbar-gutter: stable; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+body { overflow-x: hidden; overflow-wrap: break-word; }
+img, svg { max-width: 100%; }
+#screen-container > * { min-width: 0; }
+button, input { font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; }
+button { cursor: pointer; border: none; background: none; text-align: inherit; }
+button[disabled], .is-disabled { cursor: not-allowed; opacity: 0.5; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+
+.icon { display: inline-block; width: 1em; height: 1em; font-size: 20px; line-height: 1; flex-shrink: 0; }
+
+/* English content (the word itself, typed answers, synonym/antonym chips,
+   search-result words) uses the clean Latin UI stack at a slightly larger size. */
+.word-text, .quiz-input, .quiz-input::placeholder, .result-word,
+.extra-chip-text, .pos-badge, .swatch-label {
+  font-family: var(--font-en);
+}
+.word-text, .result-word { direction: ltr; unicode-bidi: isolate; }
+
+#app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+#screen-container {
+  flex: 1;
+  padding: var(--sp-sm) var(--sp-sm) 0;
+  padding-bottom: calc(var(--nav-height) + var(--nav-gap) + env(safe-area-inset-bottom, 0px) + var(--sp-md));
+  max-width: var(--content-max-width);
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ---------- Typography helpers ---------- */
+.title-xl { font-size: var(--font-size-xxl); font-weight: var(--fw-bold); margin: 0; line-height: 1.25; }
+.title-lg { font-size: var(--font-size-xl); font-weight: var(--fw-bold); margin: 0; line-height: 1.3; }
+.text-muted { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.empty-note { color: var(--color-text-muted); font-size: var(--font-size-sm); text-align: center; padding: var(--sp-lg) 0; }
+/* A note, shown as a subtle highlighted callout instead of colored small print. */
+.hint-note { --hl: var(--hlt-yellow); color: var(--color-text); background: color-mix(in srgb, var(--hl) var(--hlt-alpha), transparent); box-shadow: inset 3px 0 0 color-mix(in srgb, var(--hl) 70%, transparent); font-size: var(--font-size-sm); line-height: 1.5; margin: 0 0 var(--sp-sm); padding: var(--sp-xs) var(--sp-sm); border-radius: var(--r-md); }
+
+/* ---------- App header ---------- */
+.app-header {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  min-height: 48px; margin-bottom: var(--sp-md);
+}
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: var(--r-md);
+  color: var(--color-ink); flex-shrink: 0;
+}
+.icon-btn:hover, .back-btn:hover { background: var(--color-mint); }
+
+/* ---------- Search ---------- */
+.search-box {
+  display: flex; align-items: center; gap: var(--sp-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-pill);
+  padding: var(--sp-xs) var(--sp-md);
+  margin-bottom: var(--sp-md);
+}
+.search-box:focus-within { border-color: var(--color-ink); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-ink) 18%, transparent); }
+.search-icon { color: var(--color-text-muted); }
+.search-input { flex: 1; border: none; outline: none; background: transparent; padding: var(--sp-xs) 0; min-width: 0; }
+.search-results { margin-bottom: var(--sp-sm); }
+.search-results-head { font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--sp-xs); }
+
+.result-row {
+  width: 100%; display: flex; align-items: center; gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md);
+  margin-bottom: var(--sp-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+}
+button.result-row:hover { background: var(--color-surface-alt); border-color: var(--color-mint-strong); }
+.result-icon { color: var(--tone, var(--color-ink)); }
+.result-text { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.result-word { font-weight: var(--fw-bold); }
+.result-meaning { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.result-loc { font-size: var(--font-size-xs); color: var(--color-text-muted); flex-shrink: 0; }
+.answer-you-wrote {
+  font-size: var(--font-size-xs); color: var(--color-danger); flex-shrink: 0;
+  font-family: var(--font-en); direction: ltr;
+  background: var(--color-danger-bg); border-radius: var(--r-sm); padding: 2px 8px;
+}
+
+/* ---------- Card grid (units / lessons) ---------- */
+.card-grid { display: flex; flex-direction: column; gap: var(--sp-sm); margin-bottom: var(--sp-lg); }
+.nav-card {
+  display: flex; align-items: center; gap: var(--sp-md);
+  width: 100%;
+  padding: var(--sp-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.nav-card:hover { box-shadow: var(--shadow-md); border-color: var(--color-mint-strong); }
+.nav-card-icon {
+  color: var(--tone, var(--color-ink));
+  background: var(--tone-bg, var(--color-mint));
+  border-radius: var(--r-md);
+  /* Explicit box: the svg is border-box, so 22px of glyph + 12px padding per side
+     must be spelled out — otherwise the padding eats the whole 1em and the
+     glyph is invisible (only an empty tinted square showed). */
+  box-sizing: border-box;
+  width: calc(22px + var(--sp-sm) * 2); height: calc(22px + var(--sp-sm) * 2);
+  padding: var(--sp-sm);
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.nav-card-text { flex: 1; min-width: 0; text-align: start; }
+.nav-card-title { font-size: var(--font-size-lg); font-weight: var(--fw-bold); }
+.nav-card-sub { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.nav-card-chevron { color: var(--color-text-muted); flex-shrink: 0; }
+/* Home unit card: the unit's progress sits under its name (one bar per UNIT). */
+.unit-progress { display: flex; align-items: center; gap: var(--sp-sm); margin-top: var(--sp-xs); }
+.unit-progress .progress-bar { flex: 1; min-width: 0; }
+.unit-progress-pct { flex-shrink: 0; min-width: 3.4ch; text-align: end; font-size: var(--font-size-sm); font-weight: var(--fw-head); font-variant-numeric: tabular-nums; color: var(--color-text); }
+
+/* ---------- Section cards (Vocabulary / Idioms / Synonyms & Antonyms) ---------- */
+.sections-wrap { display: flex; flex-direction: column; gap: var(--sp-md); margin-bottom: var(--sp-md); }
+.section-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-md);
+  box-shadow: var(--shadow-sm);
+}
+.section-card-head { display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-md); }
+.section-icon-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: var(--r-md);
+  background: var(--tone-bg, var(--color-mint)); color: var(--tone, var(--color-ink)); flex-shrink: 0;
+}
+/* Tones: each section type has its own hue by default; under an accent they
+   all resolve to that accent (see the --tone-* tokens in root.css). */
+.tone-blue, .sec-vocabulary { --tone: var(--tone-blue); --tone-bg: var(--tone-blue-bg); }
+.tone-cyan, .sec-synonyms { --tone: var(--tone-cyan); --tone-bg: var(--tone-cyan-bg); }
+.tone-amber { --tone: var(--tone-amber); --tone-bg: var(--tone-amber-bg); }
+.tone-violet, .sec-idioms { --tone: var(--tone-violet); --tone-bg: var(--tone-violet-bg); }
+.tone-rose, .sec-derivatives { --tone: var(--tone-rose); --tone-bg: var(--tone-rose-bg); }
+.tone-slate, .sec-generic { --tone: var(--tone-slate); --tone-bg: var(--tone-slate-bg); }
+.section-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.section-title { font-size: var(--font-size-lg); font-weight: var(--fw-bold); margin: 0; }
+.section-count { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.section-title-flat {
+  display: flex; align-items: center; gap: var(--sp-xs);
+  font-size: var(--font-size-lg); font-weight: var(--fw-bold);
+  margin: var(--sp-lg) 0 var(--sp-sm);
+}
+.section-title-flat .icon { color: var(--color-review); }
+.section-title-flat.breakdown-wrong .icon { color: var(--color-danger); }
+.section-title-flat.breakdown-skipped .icon { color: var(--color-text-muted); }
+
+.quiz-launch-row { display: flex; gap: var(--sp-sm); margin: var(--sp-sm) 0; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-xs);
+  flex: 1;
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: var(--r-md);
+  font-weight: var(--fw-medium);
+  font-size: var(--font-size-md);
+}
+.btn-primary { background: var(--color-primary); color: var(--color-primary-contrast); }
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-secondary { background: var(--color-mint); color: var(--color-ink); }
+.btn-secondary:hover { background: var(--color-mint-strong); }
+.btn-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.btn-danger:hover { background: var(--color-danger); color: var(--role-on-danger); }
+
+/* ---------- Custom checkbox ---------- */
+.cb-wrap { display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
+.cb-box {
+  position: relative;
+  width: 22px; height: 22px;
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: transparent;
+  background: var(--color-surface);
+}
+.cb-box .icon { font-size: 15px; position: absolute; display: none; }
+.cb-input:checked ~ .cb-box,
+.cb-input:indeterminate ~ .cb-box {
+  background: var(--color-known-fill); border-color: var(--color-known-fill); color: var(--color-known-contrast);
+}
+.cb-input:checked ~ .cb-box .cb-icon-checked { display: block; }
+.cb-input:indeterminate ~ .cb-box .cb-icon-indeterminate { display: block; }
+
+/* ---------- Collapsible groups ---------- */
+/* The GROUP is the layout unit. Mobile: one group per row. Desktop
+   (>= 1024px, see the breakpoint below): a responsive grid of groups
+   side by side. Word cards never join the page-level grid — they only
+   ever arrange themselves inside their own group. */
+.groups-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-sm); }
+.group {
+  container-type: inline-size; container-name: group;
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+.group-head {
+  display: flex; align-items: center; gap: var(--sp-sm);
+  padding: var(--sp-sm) var(--sp-md);
+  background: var(--color-surface-alt);
+}
+.group-title { flex: 1; min-width: 0; font-weight: var(--fw-medium); cursor: pointer; }
+.group-count { font-size: var(--font-size-xs); color: var(--color-text-muted); cursor: pointer; flex-shrink: 0; }
+.group-toggle { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: var(--color-text-muted); flex-shrink: 0; }
+.group-chevron { transform: rotate(0deg); }
+.group.open .group-chevron { transform: rotate(90deg); }
+.group-body { display: none; flex-direction: column; }
+.group.open .group-body { display: flex; }
+
+/* Inside a group that is wide enough (>= 340px), its word cards flow in up
+   to three compact columns (a 6-word group reads 3 + 3). Driven by the GROUP's own
+   width (container query), so it adapts the same way on a tablet or in a
+   desktop grid cell, and stays a single column on phones. */
+/* Tablet/desktop only — phones keep the original single-column word card. */
+@media (min-width: 640px) {
+  @container group (min-width: 340px) {
+    .group.open .group-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(max(148px, calc((100% - 2 * var(--sp-xs)) / 3)), 1fr));
+      gap: var(--sp-xs);
+      padding: var(--sp-sm);
+    }
+    .group .group-body .word-card { margin: 0; padding: var(--sp-xs) var(--sp-sm); gap: 2px; }
+    .group .group-body .word-card-head {
+      display: grid; grid-template-columns: auto 1fr; align-items: center;
+      column-gap: var(--sp-xs); row-gap: 2px;
+    }
+    .group .group-body .word-cb { grid-area: 1 / 1; }
+    .group .group-body .diff-badge { grid-area: 1 / 2; justify-self: end; }
+    .group .group-body .word-identity { grid-area: 2 / 1 / 3 / 3; }
+    .group .group-body .word-text { font-size: clamp(18px, 1.2vw + 8px, 22px); }
+    .group .group-body .word-meaning { font-size: var(--font-size-sm); line-height: 1.6; }
+    .group .group-body .word-card-foot { gap: 4px; }
+    .group .group-body .word-state { gap: 4px; font-size: 11px; white-space: nowrap; }
+    .group .group-body .flag-label { display: none; }
+    .group .group-body .flag-btn { min-width: 32px; min-height: 32px; justify-content: center; padding: 0; }
+  }
+}
+
+/* ---------- Word card ----------
+   Hierarchy: word (hero) → POS → meaning → extras → footer actions.
+   Mobile-first; colors come only from the shared theme/accent tokens. */
+.word-card {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: var(--sp-xs);
+  margin: var(--sp-xs) var(--sp-sm) 0;
+  padding: var(--sp-sm) var(--sp-md) var(--sp-xs);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+}
+.word-card:last-child { margin-bottom: var(--sp-sm); }
+/* Known: quiet mint tint + a thin accent bar on the reading-start edge. */
+.word-card::before {
+  content: ''; position: absolute; inset-block: 0; inset-inline-start: 0;
+  width: 4px; background: var(--color-known-fill);
+  transform: scaleY(0); transform-origin: center;
+}
+.word-card.is-known { background: var(--color-known-bg); border-color: var(--color-known-border); }
+.word-card.is-known::before { transform: scaleY(1); }
+.word-card.is-review { border-color: var(--color-review); }
+
+.word-card-head { display: flex; align-items: flex-start; gap: var(--sp-sm); min-width: 0; }
+/* 44px touch target; negative margins keep the visual box compact. */
+.word-cb { justify-content: center; min-width: 44px; min-height: 44px; margin: -10px 0 -10px -10px; }
+.word-cb .cb-box { width: 26px; height: 26px; border-radius: 8px; }
+.cb-input:focus-visible ~ .cb-box, .flag-btn:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+
+.word-identity { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.word-text {
+  max-width: 100%;
+  font-weight: var(--fw-bold);
+  font-size: clamp(21px, 5.8vw, 26px); line-height: 1.25; letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.pos-group { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.pos-badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 8px; border-radius: var(--r-pill);
+  font-size: 11px; font-weight: var(--fw-medium); font-style: italic; line-height: 1.6;
+  background: var(--pos-bg); color: var(--pos-fg);
+}
+/* One color per part of speech (tokens in root.css; NOT affected by the accent). */
+.pos-noun  { --pos-fg: var(--pos-noun-fg);  --pos-bg: var(--pos-noun-bg); }
+.pos-verb  { --pos-fg: var(--pos-verb-fg);  --pos-bg: var(--pos-verb-bg); }
+.pos-adj   { --pos-fg: var(--pos-adj-fg);   --pos-bg: var(--pos-adj-bg); }
+.pos-adv   { --pos-fg: var(--pos-adv-fg);   --pos-bg: var(--pos-adv-bg); }
+.pos-pron  { --pos-fg: var(--pos-pron-fg);  --pos-bg: var(--pos-pron-bg); }
+.pos-prep  { --pos-fg: var(--pos-prep-fg);  --pos-bg: var(--pos-prep-bg); }
+.pos-conj  { --pos-fg: var(--pos-conj-fg);  --pos-bg: var(--pos-conj-bg); }
+.pos-other { --pos-fg: var(--pos-other-fg); --pos-bg: var(--pos-other-bg); }
+.diff-badge {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+  padding: 2px 8px; border-radius: var(--r-pill);
+  font-size: var(--font-size-xs); font-weight: var(--fw-medium);
+}
+.diff-badge .icon { font-size: 14px; }
+.diff-easy { background: var(--color-success-bg); color: var(--color-success); }
+.diff-hard { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* Meanings may be written in the learner's own language (dir="auto" lets each one
+   run in its natural direction); they still line up on the card's left edge. */
+.word-meaning, .result-meaning { text-align: left; }
+.word-meaning {
+  margin: 0; font-size: var(--font-size-md); line-height: 1.75;
+  color: var(--color-text); overflow-wrap: anywhere;
+}
+
+/* Extras: secondary layer, separated by a dashed rule; absent → no space. */
+.word-extras {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding-top: var(--sp-xs); border-top: 1px dashed var(--color-border);
+}
+.extra-chip {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+  background: var(--color-surface-alt); border-radius: var(--r-pill);
+  padding: 3px 10px; font-size: var(--font-size-sm); color: var(--color-text-muted);
+}
+.extra-chip-text { unicode-bidi: isolate; overflow-wrap: anywhere; }
+.extra-chip-icon { font-size: 14px; }
+.word-extras-raw { display: block; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+.word-card-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); }
+.word-state { display: inline-flex; align-items: center; gap: 6px; font-size: var(--font-size-xs); font-weight: var(--fw-medium); color: var(--color-text-muted); }
+.word-card.is-known .word-state { color: var(--color-success); }
+.word-state-icon { display: inline-flex; }
+.flag-btn {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  min-height: 40px; padding: 0 var(--sp-sm); border-radius: var(--r-pill);
+  font-size: var(--font-size-xs); font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+}
+.flag-btn:hover { background: var(--color-surface-alt); }
+.flag-btn.active { color: var(--color-review); background: var(--color-review-bg); }
+
+/* ---------- Shared card ---------- */
+.card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--r-lg); padding: var(--sp-md); box-shadow: var(--shadow-sm); }
+
+/* ---------- Quiz launch buttons (inside a lesson's Vocabulary section) ---------- */
+.quiz-launch { height: auto; min-height: 56px; padding: var(--sp-sm) var(--sp-md); justify-content: flex-start; text-align: start; gap: var(--sp-sm); }
+.quiz-launch .icon { flex-shrink: 0; }
+.quiz-launch-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
+.quiz-launch-title { font-weight: var(--fw-bold); line-height: 1.2; }
+.quiz-launch-meta { font-family: var(--font-en); font-size: 12px; font-weight: var(--fw-regular); opacity: 0.85; line-height: 1.3; }
+
+/* ---------- Quiz: a fullscreen session ----------
+   While a quiz runs the site chrome is gone (body.quiz-active hides the bottom
+   bar, the side rail and the theme button) and .quiz-fs fills the screen.
+   Mobile first: header, a strip of numbered buttons, the question, and the
+   Previous / Next buttons at the bottom (the thumb zone). From 1024px a compact
+   panel listing the questions appears on the right and the strip disappears. */
+/* No page scrollbar behind the quiz: it would make the fixed layer 15px narrower on desktop. */
+html:has(body.quiz-active), body.quiz-active { overflow: hidden !important; }
+html:has(body.quiz-active) { scrollbar-gutter: auto; }   /* html normally reserves a gutter; the quiz layer must use the full width */
+body.quiz-active #bottom-nav { display: none !important; }
+.quiz-fs {
+  position: fixed; inset: 0; z-index: 400;
+  display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--color-bg); color: var(--color-text);
+  animation: none;
+}
+.quiz-bar { display: flex; align-items: center; gap: var(--sp-sm); padding: var(--sp-sm) var(--sp-md); flex-shrink: 0; }
+.quiz-close, .quiz-review-btn { flex-shrink: 0; }
+.quiz-heading { flex: 1; min-width: 0; line-height: 1.25; }
+.quiz-title { font-size: var(--font-size-md); font-weight: var(--fw-head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quiz-sub { font-size: var(--font-size-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.quiz-timer {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  padding: 6px 12px; border-radius: var(--r-pill);
+  background: var(--color-surface-alt); color: var(--color-text);
+  font-weight: var(--fw-head); font-variant-numeric: tabular-nums;
+  transition: background var(--t-med) var(--ease-out), color var(--t-med) var(--ease-out);
+}
+.quiz-timer .icon { width: 18px; height: 18px; }
+.quiz-timer.timer-warning { background: var(--color-review-bg); color: var(--color-review); }
+.quiz-timer.timer-critical { background: var(--color-danger-bg); color: var(--color-danger); }
+.quiz-timebar { height: 3px; background: var(--color-surface-alt); flex-shrink: 0; }
+.quiz-timebar-fill { height: 100%; width: 100%; background: var(--tone-blue); transition: width 1s linear, background var(--t-med) var(--ease-out); }
+.quiz-timebar-fill[data-state="warning"] { background: var(--color-review); }
+.quiz-timebar-fill[data-state="critical"] { background: var(--color-danger); }
+
+/* Question numbers (mobile). Each state differs in color AND shape AND marker:
+     answered   = filled green + check      (it only says "something was typed")
+     unanswered = empty gray outline
+     skipped    = dashed outline + dash
+   the current question has a thick ring. */
+.quiz-numbers {
+  display: flex; gap: var(--sp-xs); overflow-x: auto; flex-shrink: 0;
+  padding: var(--sp-xs) var(--sp-md) var(--sp-sm);
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
+}
+.quiz-numbers::-webkit-scrollbar { display: none; }
+.qn {
+  position: relative; flex: 0 0 auto; width: 44px; height: 44px; scroll-snap-align: center;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 12px; border: 2px solid var(--color-disabled);
+  background: transparent; color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums; font-weight: var(--fw-head);
+}
+.qn-num { font-size: var(--font-size-md); }
+.qn-marker { position: absolute; top: -5px; inset-inline-end: -5px; display: none; width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; }
+.qn-marker .icon { width: 12px; height: 12px; stroke-width: 3; }
+.qn-answered { background: var(--color-success); border-color: var(--color-success); color: var(--color-bg); }
+.qn-answered .qn-marker { display: inline-flex; background: var(--color-text); color: var(--color-bg); }
+.qn-skipped { border-style: dashed; border-color: var(--color-text-muted); color: var(--color-text); }
+.qn-skipped .qn-marker { display: inline-flex; background: var(--color-text-muted); color: var(--color-bg); }
+.qn-current { box-shadow: 0 0 0 3px var(--color-bg), 0 0 0 5px var(--color-ink); }
+.qn:focus-visible, .qp-row:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 3px; }
+
+.quiz-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.quiz-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.quiz-stage-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.quiz-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--sp-md); padding: var(--sp-sm) var(--sp-md) var(--sp-md); width: 100%; max-width: 720px; margin-inline: auto; overflow-y: auto; }
+.quiz-card { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: var(--sp-xs); min-height: 150px; padding: var(--sp-lg) var(--sp-md); }
+.quiz-card-label { font-size: var(--font-size-xs); font-weight: var(--fw-head); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.quiz-meaning { font-size: clamp(24px, 6.5vw, 32px); font-weight: var(--fw-head); line-height: 1.35; overflow-wrap: anywhere; }
+.quiz-answer { display: flex; flex-direction: column; gap: var(--sp-xs); }
+.quiz-input {
+  width: 100%; min-height: 60px; padding: var(--sp-sm) var(--sp-md);
+  border: 2px solid var(--color-border); border-radius: var(--r-md);
+  font-size: 22px; /* >= 16px so iOS never zooms the page on focus */
+  text-align: center; outline: none;
+  background: var(--color-surface); color: var(--color-text);
+  transition: border-color var(--t-fast) var(--ease-out);
+}
+.quiz-input:focus { border-color: var(--color-ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ink) 16%, transparent); }
+/* What the quiz tells you about the CURRENT question: only whether you have
+   written something — never whether it is right. Icon + words + color. */
+.quiz-state-line { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 24px; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.quiz-state-line .icon { width: 16px; height: 16px; }
+.quiz-state-answered { color: var(--color-success); }
+
+.quiz-foot, .qs-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm); margin-top: auto; padding-top: var(--sp-sm); }
+.quiz-nav-btn { min-height: 56px; width: 100%; font-size: var(--font-size-md); }
+.quiz-nav-btn:disabled { opacity: 0.45; }
+
+/* The "ready to finish?" step */
+.quiz-summary { justify-content: flex-start; }
+.qs-heading { margin: var(--sp-sm) 0 0; font-size: var(--font-size-xl); }
+.qs-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-xs); }
+.qs-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--sp-sm) var(--sp-xs); border-radius: var(--r-md); border: 2px solid var(--color-border); background: var(--color-surface); text-align: center; }
+.qs-icon .icon { width: 20px; height: 20px; }
+.qs-label { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.qs-value { font-size: var(--font-size-xl); font-weight: var(--fw-head); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.qs-answered { border-color: var(--color-success); }
+.qs-answered .qs-icon { color: var(--color-success); }
+.qs-skipped { border-style: dashed; border-color: var(--color-text-muted); }
+.qs-chips { display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
+
+/* Desktop word panel — hidden on phones (the number strip does its job there). */
+.quiz-panel { display: none; }
+@media (min-width: 1024px) {
+  .quiz-numbers { display: none; }
+  .quiz-bar { padding-inline: var(--sp-xl); }
+  .quiz-body { flex-direction: row; }
+  .quiz-main { flex: 1 1 auto; min-width: 0; }
+  /* On a big screen the question, the answer box and the buttons sit together in the middle, not pinned to the edges. */
+  .quiz-stage { flex: 0 1 auto; margin-block: auto; justify-content: flex-start; padding-inline: var(--sp-xl); }
+  .quiz-foot { margin-top: var(--sp-sm); }
+  .quiz-summary { margin-block: 0; padding-top: var(--sp-xl); }
+  .quiz-panel {
+    display: flex; flex-direction: column; flex: 0 0 248px; min-height: 0;
+    margin: var(--sp-sm) var(--sp-lg) var(--sp-lg) 0; padding: var(--sp-sm);
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--r-lg);
+  }
+  .qp-title { margin: 0; padding: var(--sp-xs) var(--sp-xs) var(--sp-sm); font-size: var(--font-size-sm); color: var(--color-text-muted); font-weight: var(--fw-head); text-transform: uppercase; letter-spacing: 0.06em; }
+  .qp-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .qp-row {
+    display: flex; align-items: center; gap: var(--sp-xs); width: 100%; min-height: 40px; padding: 4px var(--sp-xs);
+    border-radius: var(--r-sm); border: 2px solid transparent; text-align: start; font-size: var(--font-size-sm);
+  }
+  .qp-row:hover { background: var(--color-surface-alt); }
+  .qp-num { flex: 0 0 auto; min-width: 2ch; font-variant-numeric: tabular-nums; font-weight: var(--fw-head); color: var(--color-text-muted); }
+  .qp-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .qp-marker { flex: 0 0 auto; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid var(--color-disabled); }
+  .qp-marker .icon { width: 12px; height: 12px; stroke-width: 3; }
+  .qp-row-answered .qp-marker { background: var(--color-success); border-color: var(--color-success); color: var(--color-bg); }
+  .qp-row-skipped .qp-marker { border-style: dashed; border-color: var(--color-text-muted); color: var(--color-text-muted); }
+  .qp-row-current { border-color: var(--color-ink); background: var(--color-mint); }
+  .qp-row-current .qp-num { color: var(--color-ink); }
+}
+@media (max-height: 560px) { .quiz-card { min-height: 100px; padding: var(--sp-sm); } .quiz-meaning { font-size: 22px; } }
+
+/* ---------- Quiz result (shared by "just finished" and Quiz History detail) ---------- */
+.quiz-result { display: flex; flex-direction: column; gap: var(--sp-md); }
+.result-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--sp-xs); padding: var(--sp-lg); }
+.result-hero-label { font-size: var(--font-size-xs); font-weight: var(--fw-medium); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.result-score { font-variant-numeric: tabular-nums; line-height: 1.05; }
+.result-score-value { font-size: clamp(44px, 14vw, 64px); font-weight: var(--fw-bold); }
+.result-score-max { font-size: clamp(22px, 7vw, 30px); color: var(--color-text-muted); font-weight: var(--fw-medium); }
+.result-percent { display: inline-flex; align-items: baseline; gap: var(--sp-xs); }
+.result-percent-label { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.result-percent-value { font-size: var(--font-size-xl); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.result-bar { width: 100%; max-width: 360px; height: 8px; border-radius: var(--r-pill); background: var(--color-surface-alt); overflow: hidden; margin-top: var(--sp-xs); }
+.result-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--tone-blue); }
+.result-timedout { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--color-review); margin-top: var(--sp-xs); font-weight: var(--fw-bold); font-size: var(--font-size-sm); }
+
+.result-cats { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-xs); }
+.result-cat {
+  display: flex; align-items: center; gap: var(--sp-xs); min-height: 52px;
+  padding: var(--sp-xs) var(--sp-sm); border-radius: var(--r-md);
+  background: var(--cat-bg); color: var(--cat-fg); border: 1px solid transparent;
+}
+.result-cat-icon { display: inline-flex; flex-shrink: 0; }
+.result-cat-label { flex: 1; min-width: 0; font-size: var(--font-size-sm); font-weight: var(--fw-medium); }
+.result-cat-value { font-size: var(--font-size-lg); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+/* Category colors: exact = success, near miss = review/amber (dashed so it
+   can never be mistaken for correct), wrong = danger, skipped = neutral. */
+.result-cat-correct, .qd-correct, .qh-count-correct { --cat-bg: var(--color-success-bg); --cat-fg: var(--color-success); }
+.result-cat-near, .qd-near, .qh-count-near { --cat-bg: var(--color-review-bg); --cat-fg: var(--color-review); }
+.result-cat-wrong, .qd-wrong, .qh-count-wrong { --cat-bg: var(--color-danger-bg); --cat-fg: var(--color-danger); }
+.result-cat-skipped, .qd-skipped, .qh-count-skipped { --cat-bg: var(--color-surface-alt); --cat-fg: var(--color-text-muted); }
+.result-cat-near { border-color: var(--color-review); border-style: dashed; }
+
+.result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm); margin-top: var(--sp-md); }
+.result-actions .btn { min-height: 52px; padding-inline: var(--sp-sm); white-space: nowrap; min-width: 0; }
+@media (max-width: 400px) { .result-actions { grid-template-columns: 1fr; } }
+
+/* Advanced Details: one control, collapsed by default. */
+.details-toggle {
+  display: flex; align-items: center; gap: var(--sp-sm); width: 100%; min-height: 52px;
+  padding: var(--sp-xs) var(--sp-md);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--r-md);
+  font-weight: var(--fw-bold); font-size: var(--font-size-md); box-shadow: var(--shadow-sm);
+}
+.details-toggle:hover { background: var(--color-surface-alt); }
+.details-toggle:focus-visible, .details-filter:focus-visible, .qh-item:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+.details-toggle-icon { color: var(--color-text-muted); }
+.details-toggle-label { flex: 1; text-align: start; }
+.details-chevron { color: var(--color-text-muted); transition: transform var(--t-fast) var(--ease-out); }
+.details-toggle.open .details-chevron { transform: rotate(180deg); }
+.result-details { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.result-details[hidden] { display: none; }
+/* Flex-wrap (not a fixed grid) so an incomplete last row stretches instead of leaving an empty cell. */
+.details-grid { display: flex; flex-wrap: wrap; gap: 1px; margin: 0; background: var(--color-border); border: 1px solid var(--color-border); border-radius: var(--r-md); overflow: hidden; }
+.details-item { flex: 1 1 calc(50% - 1px); background: var(--color-surface); padding: var(--sp-sm) var(--sp-md); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.details-item dt { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.details-item dd { margin: 0; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.details-subtitle { margin: var(--sp-sm) 0 0; font-size: var(--font-size-md); font-weight: var(--fw-bold); }
+.details-filters { display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
+.details-filter {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 var(--sp-md);
+  border-radius: var(--r-pill); border: 1px solid var(--color-border); background: var(--color-surface);
+  font-size: var(--font-size-sm); font-weight: var(--fw-medium);
+}
+.details-filter.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-primary-contrast); }
+.details-filter.is-empty:not(.active) { opacity: 0.55; }
+.details-filter-count { font-variant-numeric: tabular-nums; opacity: 0.85; }
+.qd-list { display: flex; flex-direction: column; gap: var(--sp-xs); }
+.qd-row { display: flex; align-items: flex-start; gap: var(--sp-sm); padding: var(--sp-sm); border-radius: var(--r-md); background: var(--color-surface); border: 1px solid var(--color-border); }
+.qd-badge { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; background: var(--cat-bg); color: var(--cat-fg); }
+.qd-near .qd-badge { border: 1px dashed var(--color-review); }
+.qd-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.qd-expected { font-weight: var(--fw-bold); font-family: var(--font-en); direction: ltr; text-align: left; overflow-wrap: anywhere; }
+.qd-prompt { color: var(--color-text-muted); font-size: var(--font-size-sm); text-align: left; overflow-wrap: anywhere; }
+.qd-yours { font-size: var(--font-size-sm); font-family: var(--font-en); direction: ltr; text-align: left; color: var(--cat-fg); overflow-wrap: anywhere; }
+.qd-points { flex-shrink: 0; font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; color: var(--cat-fg); font-size: var(--font-size-sm); padding-top: 4px; }
+
+/* ---------- Statistics ---------- */
+/* ---------- Statistics: overall hero + one grouped list ---------- */
+.stats-hero { display: flex; flex-direction: column; gap: var(--sp-xs); padding: var(--sp-lg); margin-bottom: var(--sp-sm); }
+.stats-hero-label { font-size: var(--font-size-xs); font-weight: var(--fw-head); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.stats-hero-main { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-sm); flex-wrap: wrap; }
+.stats-hero-pct { font-size: clamp(40px, 13vw, 56px); line-height: 1; font-weight: var(--fw-head); font-variant-numeric: tabular-nums; }
+.stats-hero-count { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.stats-section-title { display: flex; align-items: center; gap: var(--sp-xs); margin: var(--sp-lg) 0 var(--sp-sm); padding-inline: var(--sp-2xs); font-size: var(--font-size-lg); font-weight: var(--fw-head); line-height: 1.3; }
+.stats-section-title .icon { width: 20px; height: 20px; color: var(--color-review); }
+.stats-types { padding: var(--sp-2xs) var(--sp-lg); margin-bottom: var(--sp-xs); }
+.stats-type { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: var(--sp-sm); row-gap: var(--sp-2xs); padding: var(--sp-md) 0; border-bottom: 1px solid var(--color-border); }
+.stats-type:last-child { border-bottom: none; }
+.stats-type-badge { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--r-md); background: var(--tone-bg, var(--color-mint)); color: var(--tone, var(--color-ink)); }
+.stats-type-text { display: flex; flex-direction: column; min-width: 0; }
+.stats-type-label { font-weight: var(--fw-head); line-height: 1.3; }
+.stats-type-count { color: var(--color-text-muted); font-size: var(--font-size-xs); font-variant-numeric: tabular-nums; }
+.stats-type-pct { font-weight: var(--fw-head); font-size: var(--font-size-lg); font-variant-numeric: tabular-nums; }
+.stats-type-bar { grid-column: 1 / -1; margin: var(--sp-2xs) 0 0; height: 8px; }
+
+/* ---------- Info ---------- */
+/* ---------- Info ---------- */
+.info-page { display: flex; flex-direction: column; min-height: calc(100dvh - var(--nav-height) - env(safe-area-inset-bottom, 0px) - var(--sp-lg) * 2 - 8px); }
+.info-card { padding: var(--sp-lg); }
+.info-card-title { margin: 0 0 var(--sp-xs); font-size: var(--font-size-lg); font-weight: var(--fw-bold); }
+.info-card-intro { margin: 0 0 var(--sp-md); line-height: 1.6; }
+.pos-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.pos-item { display: flex; gap: var(--sp-md); align-items: flex-start; padding: var(--sp-sm) 0; border-top: 1px solid var(--color-border); }
+.pos-item:first-child { border-top: none; }
+.pos-badge-lg { flex: 0 0 76px; justify-content: center; font-size: var(--font-size-sm); padding: 3px 8px; font-style: normal; font-weight: var(--fw-bold); }
+.pos-item-body { min-width: 0; }
+.pos-item-name { font-weight: var(--fw-bold); }
+.pos-item-text { margin: 2px 0 0; line-height: 1.55; font-size: var(--font-size-sm); }
+.pos-item-example { margin: 2px 0 0; font-size: var(--font-size-sm); font-family: var(--font-en); }
+.pos-note { margin: var(--sp-sm) 0 0; padding-top: var(--sp-sm); border-top: 1px solid var(--color-border); line-height: 1.55; }
+/* Small footer credit: light, not bold, pinned to the bottom of the screen. */
+/* The brand font has a single heavy weight, so the footer uses the regular
+   system stack — that is what makes it genuinely light and not bold. */
+.info-footer { font-family: var(--font-en); margin-top: auto; padding: var(--sp-xl) 0 var(--sp-xs); text-align: center; color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: var(--fw-regular); }
+.info-footer p { margin: 0; }
+.info-copyright { margin-top: 2px; opacity: 0.85; }
+/* ONE progress look for the whole app (Home, Statistics, Lesson, Quiz): track =
+   --color-surface-alt, fill = the current tone. By default each content type
+   keeps its own tone; with an accent selected every tone becomes that accent
+   (root.css), so no bar has a fixed color of its own. */
+.progress-bar { width: 100%; height: 10px; background: var(--color-surface-alt); border-radius: var(--r-pill); overflow: hidden; margin: var(--sp-sm) 0; }
+.progress-fill { height: 100%; background: var(--tone, var(--color-ink)); border-radius: var(--r-pill); transition: width var(--t-med) var(--ease-out); }
+.progress-sm { height: 8px; margin: 0; }
+.progress-lg { height: 12px; margin: var(--sp-xs) 0 0; }
+.review-list, .quiz-history-list { display: flex; flex-direction: column; gap: var(--sp-xs); margin-bottom: var(--sp-lg); }
+/* ---------- Quiz History (its own tab) ---------- */
+.qh-item {
+  position: relative; display: flex; flex-direction: column; gap: var(--sp-xs); width: 100%; text-align: start;
+  padding: var(--sp-sm) var(--sp-md); padding-inline-end: calc(var(--sp-md) + 20px);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm); min-height: 48px;
+}
+.qh-item:hover { background: var(--color-surface-alt); border-color: var(--color-mint-strong); }
+.qh-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-sm); }
+.qh-title { display: flex; flex-direction: column; min-width: 0; }
+.qh-mode { font-weight: var(--fw-bold); }
+.qh-context { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.qh-score { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.qh-score-value { font-size: var(--font-size-lg); font-weight: var(--fw-bold); }
+.qh-score-max { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.qh-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--font-size-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+.qh-pct { font-weight: var(--fw-bold); color: var(--color-text); }
+.qh-duration { display: inline-flex; align-items: center; gap: 3px; }
+.qh-duration .icon { width: 14px; height: 14px; }
+.qh-date { margin-inline-start: auto; }
+.qh-counts { display: flex; flex-wrap: wrap; gap: 6px; }
+.qh-count { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--r-pill); background: var(--cat-bg); color: var(--cat-fg); font-size: var(--font-size-xs); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.qh-count .icon { width: 13px; height: 13px; }
+.qh-chevron { position: absolute; inset-inline-end: var(--sp-sm); top: 50%; transform: translateY(-50%); color: var(--color-text-muted); }
+.history-empty { display: flex; flex-direction: column; align-items: center; gap: var(--sp-xs); text-align: center; padding: var(--sp-xl) var(--sp-lg); }
+.history-empty-icon { width: 36px; height: 36px; color: var(--color-text-muted); }
+
+/* ---------- Blocked (file://) screen ---------- */
+.blocked-card { text-align: center; }
+.blocked-icon { font-size: 40px; color: var(--color-review); margin-bottom: var(--sp-sm); }
+.blocked-steps { text-align: start; margin: var(--sp-md) 0 0; padding-inline-start: var(--sp-lg); display: flex; flex-direction: column; gap: var(--sp-sm); }
+
+/* ---------- Missing section warning ---------- */
+.section-missing { border-color: var(--color-review); border-style: dashed; }
+.section-icon-warning { background: var(--color-review-bg); color: var(--color-review); }
+.text-warning { color: var(--color-review); }
+
+/* ---------- Mini progress (lesson-scoped Vocabulary progress) ---------- */
+.mini-progress-row { display: flex; align-items: center; gap: var(--sp-xs); margin-top: 4px; }
+.mini-progress { flex: 1; max-width: 140px; height: 6px; background: var(--color-surface-alt); border-radius: var(--r-pill); overflow: hidden; }
+.mini-progress-fill { height: 100%; background: var(--tone, var(--color-ink)); border-radius: var(--r-pill); }
+.mini-progress-text { font-size: var(--font-size-xs); color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---------- Bottom nav ----------
+   Fixed height + safe-area padding so it never overlaps a phone's home
+   indicator / gesture bar, and never looks cramped on a wide screen. */
+.bottom-nav {
+  /* Floating, rounded bar: it sits above the safe area with a small gap, so it
+     never touches the screen edge or the phone's gesture bar. */
+  position: fixed; left: 0; right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-gap));
+  width: calc(100% - var(--sp-md));
+  height: var(--nav-height);
+  padding: 4px;
+  display: flex; gap: 2px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--r-pill);   /* a true pill: fully rounded ends */
+  box-shadow: var(--shadow-md);
+  max-width: min(var(--content-max-width), 720px);
+  margin: 0 auto;
+  z-index: 100;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 11px; color: var(--color-text-muted); font-family: var(--font-en);
+}
+.nav-btn .icon { font-size: 22px; }
+/* Six tabs on a phone: keep every label on one line inside its slot. */
+.nav-btn { min-width: 0; padding-inline: 2px; }
+.nav-btn span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 359px) { .nav-btn { font-size: 9.5px; letter-spacing: -0.2px; } .nav-btn .icon { font-size: 18px; } }
+.nav-btn.active { color: var(--color-ink); }
+.bottom-nav .nav-btn { border-radius: var(--r-md); }
+.bottom-nav .nav-btn:hover { background: var(--color-surface-alt); }
+.bottom-nav .nav-btn.active { background: var(--color-mint); font-weight: var(--fw-medium); }
+.nav-btn:focus-visible { outline: 2px solid var(--color-ink); outline-offset: -2px; }
+/* Seven tabs: labels shrink a little on narrow phones, never wrap or overflow. */
+@media (max-width: 419px) { .bottom-nav { padding: 3px; gap: 0; } .nav-btn { font-size: 9.5px; padding-inline: 0; } .nav-btn .icon { font-size: 20px; } }
+
+/* ---------- Skeleton ---------- */
+.skeleton-wrap { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.sk { border-radius: var(--r-md); background: var(--color-surface-alt); }
+.sk-header { height: 56px; }
+.sk-search { height: 44px; border-radius: var(--r-pill); }
+.sk-card { height: 72px; }
+.sk-group { height: 120px; }
+
+/* ================= Responsive breakpoints ================= */
+@media (min-width: 640px) {
+  /* keep the bottom-nav clearance — the shorthand alone would drop it */
+  :root { --content-max-width: 880px; }
+  #screen-container { padding: var(--sp-md) var(--sp-md) 0; padding-bottom: calc(var(--nav-height) + var(--nav-gap) + env(safe-area-inset-bottom, 0px) + var(--sp-md)); }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-md); }
+  .stats-types { display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--sp-xl); }
+  .stats-type:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+}
+@media (min-width: 1024px) {
+  :root { --content-max-width: 1120px; }
+
+  /* Desktop: a wide floating pill. The language and theme circles stand beside it
+     (outside it) at the same height — see "Floating controls" at the end of this file. */
+  .bottom-nav { width: var(--bar-w); max-width: none; height: var(--nav-height); padding: 6px; gap: 4px; }
+  .nav-btn { font-size: var(--font-size-sm); }
+  #screen-container { padding: var(--sp-lg) var(--sp-lg); padding-bottom: calc(var(--nav-height) + var(--nav-gap) + env(safe-area-inset-bottom, 0px) + var(--sp-lg)); }
+
+  .card-grid { grid-template-columns: 1fr 1fr 1fr; }
+  /* Sections stack full width; the GROUP grid lives inside each section. */
+  .groups-wrap { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--sp-md); }
+  .quiz-launch-row .btn { flex: 0 1 300px; }
+  .result-cats { grid-template-columns: repeat(4, 1fr); }
+  .quiz-actions, .result-actions { max-width: 560px; }
+  .review-list, .quiz-history-list { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm); }
+}
+@media (min-width: 1280px) {
+  :root { --content-max-width: 1320px; }
+  .card-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 479px) {
+  .quiz-launch-row { flex-direction: column; }
+  .quiz-launch-row .btn { width: 100%; }
+}
+@media (min-width: 640px) {
+  .result-cats { grid-template-columns: repeat(4, 1fr); }
+  .details-item { flex-basis: calc(33.333% - 1px); }
+}
+@media (max-width: 400px) {
+  :root { --nav-height: 58px; }
+  .word-card { margin-inline: var(--sp-xs); padding-inline: var(--sp-sm); }
+}
+
+/* ---------- README screen (rendered Markdown) ---------- */
+.readme-card { padding: var(--sp-lg); min-width: 0; }
+/* Long-form reading: regular-weight system font (the brand font is a single heavy
+   weight, which makes **bold** indistinguishable) and a comfortable line length. */
+.md-body { font-family: var(--font-en); font-size: 15.5px; line-height: 1.7; overflow-wrap: anywhere; min-width: 0; max-width: 860px; }
+.md-body > :first-child { margin-top: 0; }
+.md-h { font-weight: var(--fw-bold); line-height: 1.25; margin: var(--sp-lg) 0 var(--sp-sm); scroll-margin-top: var(--sp-md); }
+.md-h1 { font-size: var(--font-size-xxl); margin-top: 0; padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--color-border); }
+.md-h2 { font-size: var(--font-size-xl); margin-top: var(--sp-xl); padding-bottom: var(--sp-xs); border-bottom: 1px solid var(--color-border); }
+.md-h3 { font-size: var(--font-size-lg); }
+.md-h4, .md-h5, .md-h6 { font-size: var(--font-size-md); }
+.md-p { margin: 0 0 var(--sp-md); }
+.md-body a { color: var(--color-ink); text-decoration: underline; text-underline-offset: 2px; }
+.md-body a:hover { text-decoration-thickness: 2px; }
+.md-body a:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; border-radius: 2px; }
+.md-list { margin: 0 0 var(--sp-md); padding-inline-start: var(--sp-lg); display: flex; flex-direction: column; gap: 4px; }
+.md-list .md-list { margin: 4px 0 0; }
+.md-quote { margin: 0 0 var(--sp-md); padding: var(--sp-sm) var(--sp-md); background: var(--color-mint); border-inline-start: 4px solid var(--color-ink); border-radius: 0 var(--r-md) var(--r-md) 0; }
+.md-quote p { margin: 0; }
+.md-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+.md-pre { margin: 0 0 var(--sp-md); padding: var(--sp-md); background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: var(--r-md); overflow-x: auto; max-width: 100%; }
+.md-pre code { background: none; border: none; padding: 0; font-size: 12.5px; line-height: 1.6; white-space: pre; overflow-wrap: normal; }
+.md-table-wrap { margin: 0 0 var(--sp-md); overflow-x: auto; max-width: 100%; border: 1px solid var(--color-border); border-radius: var(--r-md); }
+.md-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+.md-table th, .md-table td { padding: var(--sp-xs) var(--sp-sm); border-bottom: 1px solid var(--color-border); vertical-align: top; text-align: start; }
+.md-table th { background: var(--color-surface-alt); font-weight: var(--fw-bold); white-space: nowrap; }
+.md-table tr:last-child td { border-bottom: none; }
+.md-hr { border: none; border-top: 1px solid var(--color-border); margin: var(--sp-lg) 0; }
+.md-img { max-width: 100%; height: auto; border-radius: var(--r-md); }
+
+/* ---------- Info: study method ----------
+   The owner's text is Egyptian Arabic, shown right-to-left inside the LTR
+   page. Readable first: generous line height, short paragraphs. The eye is
+   then caught by a few highlights — a soft tinted rounded background with a
+   light glow; the text itself keeps the normal text color, so contrast stays
+   high in Light and Dark. Meanings: blue = easy / normal, red = needs focus,
+   ink = the "black pen". */
+.study-card { margin-bottom: var(--sp-md); padding: var(--sp-md) var(--sp-md) var(--sp-lg); }
+.study-card .info-card-title { margin-bottom: var(--sp-sm); }
+.study-text { line-height: 2.05; font-size: var(--font-size-md); text-align: start; overflow-wrap: anywhere; max-width: 46rem; margin-inline: auto; } /* comfortable line length on wide screens */
+.study-p { margin: 0 0 var(--sp-md); }
+.study-lead { margin: 0 0 var(--sp-lg); font-size: var(--font-size-lg); font-weight: var(--fw-head); line-height: 1.7; }
+/* Transition lines (the "what if you forget?" / "how do we review?" questions): a clear visual pause. */
+.study-transition {
+  margin: var(--sp-xl) 0 var(--sp-md); padding: var(--sp-sm) var(--sp-md);
+  border-inline-start: 4px solid var(--color-ink); border-radius: var(--r-md);
+  background: var(--color-mint); font-weight: var(--fw-head); font-size: var(--font-size-lg); line-height: 1.6;
+}
+/* Example sentences: small inline-style blocks, not cards. */
+.study-example {
+  display: block; width: fit-content; max-width: 100%;
+  margin: var(--sp-2xs) 0 var(--sp-sm); padding: 2px var(--sp-md);
+  border: 1px dashed var(--color-mint-strong); border-radius: var(--r-md);
+  background: var(--color-surface-alt); font-weight: var(--fw-head);
+}
+.study-example-en { font-family: var(--font-en); text-align: left; }
+.study-aside { margin: 0 0 var(--sp-md); font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+/* ---------- Highlight system (shared by the whole site) ----------
+   A highlight is a soft tinted rounded rectangle behind normal-colored text,
+   like a real highlighter on paper: low intensity, no glow, no blur, and the
+   text keeps its own color so reading is never harder. Use it sparingly —
+   for a key phrase, a note, a tip, a warning, an important state. Never on
+   whole paragraphs. The four colors are decoration for the eye; none of them
+   stands for a meaning (that is why they are separate from the theme colors). */
+.hl {
+  --hl: var(--hlt-yellow);
+  display: inline; padding: 0.04em 0.55em 0.08em; margin-inline: 0.1em;
+  /* a real highlighter never makes a perfect rectangle: the four corners differ a little */
+  border-radius: 0.55em 0.25em 0.6em 0.3em / 0.3em 0.6em 0.25em 0.55em;
+  background: linear-gradient(104deg, transparent 0.4%, color-mix(in srgb, var(--hl) var(--hlt-alpha), transparent) 1.4%, color-mix(in srgb, var(--hl) calc(var(--hlt-alpha) + 8%), transparent) 98%, transparent 99.6%);
+  box-shadow: inset 0 -0.12em 0 color-mix(in srgb, var(--hl) 22%, transparent);
+  color: var(--color-text);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.hl-purple, .hl-pink { border-radius: 0.3em 0.6em 0.3em 0.55em / 0.55em 0.3em 0.6em 0.3em; }
+.hl-yellow { --hl: var(--hlt-yellow); }
+.hl-green { --hl: var(--hlt-green); }
+.hl-purple { --hl: var(--hlt-purple); }
+.hl-pink { --hl: var(--hlt-pink); }
+/* The two halves of a split word (indivi · duals): a little bigger, each its own chip. */
+.hl-syl { padding: 0.06em 0.65em; font-family: var(--font-en); font-weight: var(--fw-head); unicode-bidi: isolate; }
+/* A pen color named in the text: colored ink, no background (pens ≠ highlighters). */
+.pen { font-weight: var(--fw-head); }
+.pen-blue { color: var(--pen-blue); }
+.pen-red { color: var(--pen-red); }
+.pen-black { color: var(--color-text); }
+
+/* Block version: a note / tip / warning. Soft rounded background, a thin start edge, plain text. */
+.callout {
+  --hl: var(--hlt-yellow);
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--hl) var(--hlt-alpha), transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--hl) 70%, transparent);
+  color: var(--color-text);
+}
+.callout-ok { --hl: var(--hlt-green); }
+.callout-text { margin: 0; line-height: 1.55; font-size: var(--font-size-sm); }
+.callout .qs-chips { margin-top: var(--sp-sm); }
+
+/* The educational note under the Study Method text. */
+.hl-legend { margin-top: var(--sp-md); padding-top: var(--sp-md); border-top: 1px solid var(--role-border); }
+.hl-note {
+  margin: 0; padding: var(--sp-sm) var(--sp-md); line-height: 1.9; font-size: var(--font-size-sm);
+  border-radius: var(--r-md); background: var(--role-surface-alt); text-align: start;
+}
+
+/* ---------- Synonyms & Antonyms: study cards ----------
+   Bigger cards for studying, not a data table: the word is the first thing you
+   see, its meaning sits right under it, then the Synonyms and the Antonyms each
+   as their own titled group of large chips. One card per row at every width,
+   so nothing is squeezed horizontally. */
+.word-card-study { padding: var(--sp-md) var(--sp-lg) var(--sp-lg); gap: var(--sp-sm); }
+.word-card-study .word-text { font-size: clamp(28px, 7vw, 34px); line-height: 1.15; }
+.word-card-study .word-meaning { font-size: var(--font-size-lg); line-height: 1.55; color: var(--color-text); }
+.related { display: flex; flex-direction: column; gap: var(--sp-md); margin-top: var(--sp-xs); padding-top: var(--sp-md); border-top: 1px solid var(--color-border); }
+.related-group { display: flex; flex-direction: column; gap: var(--sp-xs); min-width: 0; }
+.related-title { display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--font-size-sm); font-weight: var(--fw-head); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.related-icon { width: 16px; height: 16px; }
+.related-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
+.related-chip {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 6px var(--sp-md);
+  border-radius: var(--r-md); border: 2px solid var(--tone-line, var(--color-border));
+  background: var(--tone-fill, var(--color-surface-alt)); color: var(--color-text);
+  font-family: var(--font-en); font-size: var(--font-size-lg); font-weight: var(--fw-head); direction: ltr; overflow-wrap: anywhere;
+}
+.related-syn { --tone-fill: var(--tone-cyan-bg); --tone-line: color-mix(in srgb, var(--tone-cyan) 55%, transparent); }
+.related-syn .related-title { color: var(--tone-cyan); }
+/* Antonyms: a different tone AND a dashed outline, so the two groups differ without color. */
+.related-ant { --tone-fill: var(--tone-rose-bg); --tone-line: color-mix(in srgb, var(--tone-rose) 55%, transparent); }
+.related-ant .related-chip { border-style: dashed; }
+.related-ant .related-title { color: var(--tone-rose); }
+/* These cards never join the compact multi-column word grid: one card per row. */
+.group-body:has(.word-card-study) { display: none; }
+.group.open .group-body:has(.word-card-study) { display: flex; flex-direction: column; gap: var(--sp-sm); padding: var(--sp-sm); }
+.group .group-body .word-card-study { margin: 0; padding: var(--sp-md) var(--sp-lg) var(--sp-lg); gap: var(--sp-sm); }
+.group .group-body .word-card-study .word-text { font-size: clamp(28px, 7vw, 34px); }
+.group .group-body .word-card-study .word-meaning { font-size: var(--font-size-lg); line-height: 1.55; }
+.group .group-body .word-card-study .word-card-head { display: flex; }
+.group .group-body .word-card-study .flag-label { display: inline; }
+.group .group-body .word-card-study .flag-btn { min-width: 44px; min-height: 44px; padding: 0 var(--sp-sm); }
+
+
+/* ======================================================================
+   Language: right-to-left layout (<html dir="rtl"> when Arabic is chosen)
+   Most rules above already use logical properties (inline-start/end), so
+   the layout mirrors itself. These few rules fix what cannot mirror alone:
+   direction arrows, and the language/theme floating buttons.
+   ====================================================================== */
+[dir="rtl"] .nav-card-chevron,
+[dir="rtl"] .qh-chevron,
+[dir="rtl"] .back-btn .icon,
+[dir="rtl"] .quiz-nav-btn > .icon,
+[dir="rtl"] .group-chevron { transform: scaleX(-1); }
+[dir="rtl"] .qh-chevron { transform: translateY(-50%) scaleX(-1); }
+[dir="rtl"] .group.open .group-chevron { transform: rotate(90deg); }
+[dir="rtl"] .word-meaning, [dir="rtl"] .result-meaning { text-align: start; }
+[dir="rtl"] .md-body { text-align: start; }
+/* English content stays left-to-right inside an Arabic page. */
+.word-text, .quiz-input, .qd-expected, .qd-yours, .answer-you-wrote { unicode-bidi: isolate; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-btn, .float-btn, .nav-card, .search-box { transition: none !important; }
+}
+
+
+/* ======================================================================
+   Read Me, Feedback and Info (About) — same cards and tokens as the rest.
+   ====================================================================== */
+.readme-wrap { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.readme-hero { padding: var(--sp-md); }
+.readme-hero .md-h1 { font-size: var(--font-size-xl); border-bottom: none; padding-bottom: 0; margin-bottom: var(--sp-xs); }
+.readme-toc { display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
+.readme-chip { display: inline-flex; align-items: center; min-height: 36px; padding: 4px var(--sp-sm); border-radius: var(--r-pill); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-ink); font-size: var(--font-size-sm); text-decoration: none; }
+.readme-chip:hover { background: var(--color-mint); }
+.readme-chip:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+.readme-sections { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); align-items: start; }
+.readme-section { padding: var(--sp-md); min-width: 0; }
+.readme-section .md-h2 { margin: 0 0 var(--sp-sm); font-size: var(--font-size-lg); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-xs); }
+.readme-section .md-body, .readme-hero .md-body { max-width: none; }
+.readme-section > :last-child, .readme-hero > :last-child { margin-bottom: 0; }
+.readme-section .md-h3 { margin-top: var(--sp-md); }
+@media (min-width: 1100px) { .readme-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.feedback-page { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.fb-contact { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-xs); }
+.fb-contact-icon { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: var(--r-md); background: var(--color-mint); color: var(--color-ink); }
+.fb-lead { margin: 0; line-height: 1.6; }
+.fb-wa-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-xs); min-height: 52px; padding-inline: var(--sp-lg); text-decoration: none; font-weight: var(--fw-bold); margin-top: var(--sp-xs); max-width: 100%; }
+.fb-wa-btn:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 3px; }
+.fb-username { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-xs); }
+.fb-username-text { font-family: var(--font-en); direction: ltr; unicode-bidi: isolate; padding: 2px 10px; border-radius: var(--r-pill); background: var(--color-mint); color: var(--color-ink); }
+.fb-note { margin: 0; line-height: 1.5; }
+.fb-grid { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 760px) { .fb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.fb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-sm); }
+.fb-item { display: flex; gap: var(--sp-sm); align-items: flex-start; }
+.fb-item-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--r-md); background: var(--color-mint); color: var(--color-ink); flex-shrink: 0; }
+.fb-item-title { font-weight: var(--fw-bold); }
+.fb-steps { margin: 0; padding-inline-start: var(--sp-lg); display: flex; flex-direction: column; gap: var(--sp-xs); line-height: 1.55; }
+
+.about-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-xs); margin-bottom: var(--sp-xs); }
+.about-head .info-card-title { margin: 0; }
+.version-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--r-pill); background: var(--color-mint); color: var(--color-ink); font-weight: var(--fw-bold); font-size: var(--font-size-sm); }
+.version-chip .icon { font-size: 16px; }
+.about-purpose { margin: 0 0 var(--sp-sm); line-height: 1.7; }
+.about-sub { margin: 0 0 var(--sp-xs); font-size: var(--font-size-md); }
+.changelog { margin: 0; padding-inline-start: var(--sp-lg); display: flex; flex-direction: column; gap: 6px; line-height: 1.55; }
+
+
+/* ======================================================================
+   Version 11.2 — Info grid, unit vocabulary line, Word Review, undo bar
+   ====================================================================== */
+.about-grid { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); margin-bottom: var(--sp-sm); align-items: stretch; }
+@media (min-width: 760px) { .about-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.about-grid .about-card { margin-bottom: 0; }
+.info-footer { margin-top: var(--sp-md); padding: var(--sp-sm) var(--sp-xs) 0; text-align: center; color: var(--role-text-muted); }
+.info-copyright { margin: 0 0 4px; font-size: var(--font-size-sm); }
+.info-terms { margin: 0 auto; max-width: 46rem; font-size: var(--font-size-xs); line-height: 1.6; }
+
+.unit-vocab { font-variant-numeric: tabular-nums; }
+
+.review-list { gap: var(--sp-sm); }
+.review-group { background: var(--role-surface); border: 1px solid var(--role-border); border-radius: var(--r-lg); padding: var(--sp-xs) var(--sp-sm) var(--sp-sm); min-width: 0; }
+.review-group-title { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-xs); margin: 0; padding: var(--sp-xs) var(--sp-xs) var(--sp-xs); font-size: var(--font-size-md); font-weight: var(--fw-head); color: var(--role-text); }
+.review-group-count { min-width: 26px; padding: 0 8px; border-radius: var(--r-pill); background: var(--role-accent-soft); color: var(--role-accent-text); font-size: var(--font-size-xs); text-align: center; line-height: 22px; }
+.review-group-items { display: flex; flex-direction: column; gap: 4px; }
+.review-item { display: flex; align-items: stretch; gap: 4px; }
+.review-item .review-row { flex: 1; min-width: 0; }
+
+
+/* ======================================================================
+   Version 11.3
+   1. Floating controls   2. Pill navigation + More   3. Cards & titles
+   4. Information         5. Study Method             6. Settings
+   7. Review flags        8. Custom ordered lists     9. States
+   Everything below uses the --role-* tokens (root.css), so every palette and
+   both themes apply everywhere automatically.
+   ====================================================================== */
+
+/* ---- 1. Floating controls: two separate circles (language, theme) ----
+   Phones / tablets: top, at the end side (right in LTR, left in RTL).
+   Desktop (>= 1024px): bottom row, beside the navigation pill, same height as it. */
+.float-controls {
+  position: fixed; z-index: 160; display: flex; align-items: center; gap: 8px;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  inset-inline-end: calc(8px + env(safe-area-inset-right, 0px));
+}
+.float-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; padding: 0; border-radius: 50%;
+  background: var(--role-surface); color: var(--role-accent-text);
+  border: 1px solid var(--role-border); box-shadow: var(--shadow-md);
+  font-family: var(--font-main); font-weight: var(--fw-bold); font-size: var(--font-size-sm); line-height: 1;
+  transition: background-color var(--t-fast) ease, border-color var(--t-fast) ease, transform var(--t-fast) var(--ease-out);
+}
+.float-btn .icon { width: 20px; height: 20px; }
+.float-btn:hover { background: var(--role-control-hover); border-color: var(--role-accent-text); }
+.float-btn:active { transform: scale(0.94); }
+.float-btn:focus-visible { outline: 2px solid var(--role-focus); outline-offset: 3px; }
+/* System mode is marked with a small dot, so it never looks like "just another icon". */
+.float-btn[data-mode="system"]::after {
+  content: ''; position: absolute; top: 5px; inset-inline-end: 5px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--role-accent);
+  box-shadow: 0 0 0 2px var(--role-surface);
+}
+body.quiz-active .float-controls { display: none; }
+body.kbd-open .bottom-nav { display: none; }
+@media (max-width: 1023px) { .app-header { padding-inline-end: 104px; } }
+@media (min-width: 1024px) {
+  :root { --nav-height: 68px; --bar-w: min(920px, calc(100% - 356px)); }
+  .float-controls {
+    top: auto; gap: 12px;
+    bottom: calc(var(--nav-gap) + env(safe-area-inset-bottom, 0px));
+    /* beside the bar: half the bar's width past the centre, plus a clear gap */
+    inset-inline-end: auto;
+    inset-inline-start: calc(50% + var(--bar-w) / 2 + 14px);
+  }
+  .float-btn { width: var(--nav-height); height: var(--nav-height); font-size: 20px; }
+  .float-btn .icon { width: 28px; height: 28px; }
+  .float-btn[data-mode="system"]::after { top: 12px; inset-inline-end: 12px; width: 10px; height: 10px; }
+}
+
+/* ---- 2. Pill navigation + More menu ---- */
+.bottom-nav { overflow: visible; }
+.bottom-nav .nav-btn { border-radius: var(--r-pill); }
+.bottom-nav .nav-btn:hover { background: var(--role-control-hover); }
+.bottom-nav .nav-btn.active { background: var(--role-accent-soft); color: var(--role-accent-text); }
+.bottom-nav .nav-btn:focus-visible { outline: 2px solid var(--role-focus); outline-offset: -2px; }
+.nav-btn .icon { transition: transform var(--t-fast) var(--ease-out); }
+.nav-btn.active .icon { transform: translateY(-1px) scale(1.1); }
+.nav-btn[hidden] { display: none; }
+.nav-more-menu {
+  position: absolute; bottom: calc(100% + 10px); inset-inline-end: 0; z-index: 5;
+  min-width: 200px; padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--role-surface); border: 1px solid var(--role-border);
+  border-radius: 28px; box-shadow: var(--shadow-md);
+}
+.nav-more-menu[hidden] { display: none; }
+.nav-more-menu .nav-btn { flex: none; flex-direction: row; justify-content: flex-start; gap: 12px; width: 100%; min-height: 46px; padding-inline: 16px; font-size: var(--font-size-md); }
+.nav-more-menu .nav-btn span { max-width: none; }
+.nav-more-menu .nav-btn .icon { font-size: 20px; }
+
+/* ---- 3. Card titles with an icon ---- */
+.info-card-title { display: flex; align-items: center; gap: var(--sp-sm); margin: 0 0 var(--sp-sm); font-size: var(--font-size-lg); }
+.card-title-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: var(--r-md);
+  background: var(--role-accent-soft); color: var(--role-accent-text);
+}
+.card-title-icon .icon { width: 20px; height: 20px; }
+.settings-row-icon { background: var(--role-accent-soft); color: var(--role-accent-text); }
+
+/* ---- 4. Information ---- */
+.about-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
+.about-head .info-card-title { margin: 0; }
+.version-badge {
+  display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 16px;
+  border-radius: var(--r-pill); background: var(--role-accent); color: var(--role-on-accent);
+  font-size: var(--font-size-md); line-height: 1.2;
+}
+.version-badge-label { font-size: var(--font-size-sm); opacity: 0.85; }
+.version-badge strong { font-size: var(--font-size-lg); font-variant-numeric: tabular-nums; }
+.feature-tags { list-style: none; margin: 0 0 var(--sp-sm); padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.feature-tag {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 12px;
+  border-radius: var(--r-pill); background: var(--role-accent-soft); color: var(--role-accent-text);
+  border: 1px solid var(--role-accent-soft-strong); font-size: var(--font-size-sm); font-weight: var(--fw-medium);
+}
+.feature-tag .icon { width: 16px; height: 16px; }
+.about-purpose { margin: 0; line-height: 1.75; color: var(--role-text); }
+.info-footer { border-top: 1px solid var(--role-border); }
+
+/* Parts of speech: one card per tag */
+.pos-grid { list-style: none; margin: var(--sp-sm) 0; padding: 0; display: grid; gap: var(--sp-sm); grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
+.pos-grid .pos-item {
+  display: flex; gap: var(--sp-sm); align-items: flex-start; margin: 0; padding: var(--sp-sm);
+  background: var(--role-surface-alt); border: 1px solid var(--role-border); border-radius: var(--r-lg);
+}
+.pos-grid .pos-item-name { font-weight: var(--fw-bold); }
+.pos-grid .pos-item-text, .pos-grid .pos-item-example { margin: 2px 0 0; font-size: var(--font-size-sm); line-height: 1.5; }
+
+/* ---- 5. Study Method ---- */
+.study-card .study-text { display: flex; flex-direction: column; gap: var(--sp-md); }
+.study-card .study-lead {
+  margin: 0; padding: var(--sp-md); border-radius: var(--r-lg); line-height: 1.9; font-size: var(--font-size-md);
+  background: var(--role-accent-soft); border: 1px solid var(--role-accent-soft-strong);
+  border-inline-start: 5px solid var(--role-accent);
+}
+.study-stage { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.study-card .study-transition {
+  align-self: flex-start; margin: 0; padding: 6px 16px; border-radius: var(--r-pill);
+  background: var(--role-accent); color: var(--role-on-accent); font-size: var(--font-size-md); font-weight: var(--fw-bold); line-height: 1.6;
+}
+.study-card .study-transition .hl, .study-card .study-transition span { color: inherit; }
+.study-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; gap: var(--sp-sm); }
+.study-step {
+  position: relative; counter-increment: step; padding: var(--sp-sm) var(--sp-md);
+  padding-inline-start: 56px; background: var(--role-surface-alt); border: 1px solid var(--role-border);
+  border-radius: var(--r-lg); line-height: 1.9;
+}
+.study-step::before {
+  content: counter(step); position: absolute; top: 12px; inset-inline-start: 14px;
+  width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--role-accent-soft); color: var(--role-accent-text); border: 1px solid var(--role-accent-soft-strong);
+  font-weight: var(--fw-bold); font-size: var(--font-size-sm); font-family: var(--font-en, var(--font-main));
+}
+.study-step .study-p, .study-step .study-example, .study-step .study-aside { margin: 0; }
+.study-step .study-example, .study-step .study-aside {
+  margin-top: var(--sp-xs); padding: var(--sp-xs) var(--sp-sm); border-radius: var(--r-md); line-height: 1.8;
+  background: var(--role-surface); border: 1px dashed var(--role-border);
+}
+.study-step .study-aside { border-style: solid; border-inline-start: 4px solid var(--color-review); background: var(--color-review-bg); }
+
+/* ---- 6. Settings ---- */
+.settings-grid { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); align-items: start; margin-bottom: var(--sp-sm); }
+@media (min-width: 900px) { .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.settings-card { padding: var(--sp-md); }
+.settings-card-title { margin-bottom: var(--sp-xs); }
+.settings-card-sub { margin: 0 0 var(--sp-sm); }
+.settings-card .settings-row { padding-inline: 0; }
+.settings-data-card { border-color: var(--role-border); }
+.settings-data-actions { display: grid; gap: var(--sp-sm); grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.settings-data-actions .btn { border-radius: var(--r-pill); min-height: 48px; justify-content: center; }
+.settings-data-actions .btn-danger { background: transparent; color: var(--color-danger); border: 1.5px solid var(--color-danger); }
+.settings-data-actions .btn-danger:hover { background: var(--color-danger); color: var(--role-on-danger); }
+
+/* ---- 7. Review flags ---- */
+.review-item .flag-btn { flex: 0 0 48px; width: 48px; min-height: 48px; justify-content: center; padding: 0; border-radius: var(--r-md); border: 1px solid var(--role-border); }
+.review-item .flag-btn .icon { width: 20px; height: 20px; }
+.review-item .review-row { transition: opacity var(--t-med) ease; }
+.review-item.is-pending .review-row { opacity: 0.55; }
+
+/* ---- 8. Custom numbered lists (semantic <ol>, designed number badges) ---- */
+ol.fb-steps, ol.changelog, ol.blocked-steps { list-style: none; counter-reset: item; padding: 0; margin: 0; display: grid; gap: var(--sp-sm); }
+ol.fb-steps > li, ol.changelog > li, ol.blocked-steps > li { counter-increment: item; position: relative; padding-inline-start: 38px; line-height: 1.6; }
+ol.fb-steps > li::before, ol.changelog > li::before, ol.blocked-steps > li::before {
+  content: counter(item); position: absolute; top: 0; inset-inline-start: 0;
+  width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--role-accent-soft); color: var(--role-accent-text); border: 1px solid var(--role-accent-soft-strong);
+  font-size: var(--font-size-xs); font-weight: var(--fw-bold); font-family: var(--font-en, var(--font-main));
+}
+ol.md-list { list-style: none; counter-reset: item; padding-inline-start: 0; }
+ol.md-list > li { counter-increment: item; position: relative; padding-inline-start: 36px; margin-block: 6px; }
+ol.md-list > li::before {
+  content: counter(item); position: absolute; top: 0.1em; inset-inline-start: 0; width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--role-accent-soft); color: var(--role-accent-text);
+  font-size: var(--font-size-xs); font-weight: var(--fw-bold); font-family: var(--font-en, var(--font-main));
+}
+
+/* ---- 9. Interactive states: hover / active / focus-visible / disabled ---- */
+.btn:hover:not(:disabled) { filter: none; }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:focus-visible, .nav-card:focus-visible, .search-input:focus-visible, .segmented-btn:focus-visible, .readme-chip:focus-visible { outline: 2px solid var(--role-focus); outline-offset: 2px; }
+.btn:disabled, button:disabled, .btn[aria-disabled="true"] { background: var(--role-disabled-bg); color: var(--role-disabled-text); border-color: var(--role-border); cursor: not-allowed; opacity: 0.7; transform: none; }
+.search-box:focus-within { border-color: var(--role-accent-text); box-shadow: 0 0 0 3px var(--role-accent-soft); }

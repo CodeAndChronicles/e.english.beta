@@ -1,0 +1,188 @@
+/* animations.css — ALL motion in one place. Kept deliberately subtle:
+   no glassmorphism, no exaggerated bouncing — quick, quiet transitions
+   that make the interface feel responsive without being distracting. */
+
+/* ---------- Skeleton shimmer ---------- */
+@keyframes sk-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.sk {
+  animation: sk-shimmer 1.3s infinite;
+  background-image: linear-gradient(90deg, var(--color-surface-alt) 0%, var(--color-border) 50%, var(--color-surface-alt) 100%);
+  background-size: 200% 100%;
+}
+
+/* ---------- Screen fade-in ---------- */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#screen-container > * { animation: fade-in-up var(--t-med) var(--ease-out); }
+
+/* ---------- Group expand/collapse ---------- */
+.group-chevron { transition: transform var(--t-fast) var(--ease-out); }
+.group-body {
+  animation: fade-in-up var(--t-fast) var(--ease-out);
+}
+
+/* ---------- Checkbox feedback ---------- */
+@keyframes cb-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.cb-input:checked ~ .cb-box,
+.cb-input:indeterminate ~ .cb-box {
+  animation: cb-pop var(--t-fast) var(--ease-out);
+}
+.cb-box { transition: background var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out); }
+
+/* ---------- Highlight flash for deep-link (search / review navigation) ----------
+   Fully self-contained: the amber flash color is inseparable from the
+   animation, so both live here only — nothing split into another file. */
+@keyframes highlight-fade {
+  0%   { background-color: var(--color-review-bg); box-shadow: 0 0 0 3px var(--color-review); }
+  100% { background-color: transparent; box-shadow: 0 0 0 0 transparent; }
+}
+.highlight-flash {
+  animation: highlight-fade 2.2s var(--ease-out) forwards;
+  border-radius: var(--r-sm);
+}
+
+/* ---------- Flag toggle ---------- */
+@keyframes flag-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.flag-btn.active { animation: flag-pop var(--t-fast) var(--ease-out); }
+.flag-btn, .icon-btn, .nav-card, .btn, .nav-btn, .cb-box, .quiz-input, .search-box,
+.qh-item, .details-toggle, .details-filter, .theme-color-swatch, .switch-track, .segmented-btn {
+  transition: background var(--t-fast) var(--ease-out),
+              color var(--t-fast) var(--ease-out),
+              border-color var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out),
+              opacity var(--t-fast) var(--ease-out);
+}
+
+/* ---------- Quiz feedback ---------- */
+@keyframes feedback-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.quiz-feedback { animation: feedback-in var(--t-fast) var(--ease-out); }
+
+/* ---------- Quiz motion (subtle; all of it off under prefers-reduced-motion) ---------- */
+@keyframes quiz-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.quiz-enter { animation: quiz-card-in var(--t-med) var(--ease-out); }
+/* Only the critical state pulses, and only gently. */
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.quiz-timer.timer-critical { animation: timer-pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .quiz-enter, .quiz-timer.timer-critical { animation: none; }
+  .quiz-progress-fill, .quiz-timebar-fill, .quiz-feedback { transition: none; }
+}
+
+/* ---------- Progress bar fill ---------- */
+.progress-fill { transition: width var(--t-med) var(--ease-out); }
+.mini-progress-fill { transition: width var(--t-med) var(--ease-out); }
+
+/* ---------- Theme switch: smooth color transition across the whole app,
+   not an instant color-snap, without adding any heavy visual effect ---------- */
+body, .card, .section-card, .nav-card, .group, .result-row,
+.bottom-nav, .theme-toggle-btn, .search-box, .quiz-input,
+.settings-card, .settings-row, .qh-item, .theme-color-swatch, .switch-track {
+  transition: background-color var(--t-med) var(--ease-out),
+              color var(--t-med) var(--ease-out),
+              border-color var(--t-med) var(--ease-out);
+}
+@keyframes theme-btn-spin {
+  from { transform: rotate(-25deg); }
+  to   { transform: rotate(0deg); }
+}
+.theme-toggle-btn:active .icon { animation: theme-btn-spin var(--t-fast) var(--ease-out); }
+
+/* ---------- Word card: light state transitions ---------- */
+.word-card {
+  transition: background-color var(--t-med) var(--ease-out),
+              border-color var(--t-med) var(--ease-out),
+              color var(--t-med) var(--ease-out);
+}
+.word-card::before { transition: transform var(--t-med) var(--ease-out); }
+.word-state, .word-state-icon { transition: color var(--t-fast) var(--ease-out); }
+/* Deep-link flash on a card animates only the ring, so the card keeps its
+   own known/review background and radius afterwards. */
+@keyframes word-card-flash {
+  0%   { box-shadow: 0 0 0 3px var(--color-review); }
+  100% { box-shadow: var(--shadow-sm); }
+}
+.word-card.highlight-flash { animation: word-card-flash 2.2s var(--ease-out); border-radius: var(--r-md); }
+@media (prefers-reduced-motion: reduce) {
+  .word-card, .word-card::before, .word-state, .word-state-icon { transition: none; }
+  .flag-btn.active { animation: none; }
+}
+
+
+/* ======================================================================
+   Version 11.3 — interface motion. Subtle and quick. Every rule here is removed
+   by the block below when Animations are switched off in Settings
+   (<html data-motion="off">) or the device asks for reduced motion.
+   ====================================================================== */
+
+/* Cards come in one after another (first eight only). */
+.card-grid > *, .review-group, .settings-grid > *, .about-grid > *, .fb-grid > *, .readme-sections > *, .study-step, .pos-grid > * {
+  animation: fade-in-up var(--t-med) var(--ease-out) backwards;
+  animation-delay: calc(var(--stagger, 0) * 45ms);
+}
+.card-grid > :nth-child(2), .review-group:nth-child(2), .settings-grid > :nth-child(2), .about-grid > :nth-child(2), .fb-grid > :nth-child(2), .readme-sections > :nth-child(2), .study-step:nth-child(2), .pos-grid > :nth-child(2) { --stagger: 1; }
+.card-grid > :nth-child(3), .review-group:nth-child(3), .settings-grid > :nth-child(3), .readme-sections > :nth-child(3), .study-step:nth-child(3), .pos-grid > :nth-child(3) { --stagger: 2; }
+.card-grid > :nth-child(4), .settings-grid > :nth-child(4), .readme-sections > :nth-child(4), .study-step:nth-child(4), .pos-grid > :nth-child(4) { --stagger: 3; }
+.card-grid > :nth-child(n+5), .settings-grid > :nth-child(n+5), .readme-sections > :nth-child(n+5), .study-step:nth-child(n+5), .pos-grid > :nth-child(n+5) { --stagger: 4; }
+
+/* Card hover / press (only where a real pointer can hover). */
+.nav-card, .review-group, .about-card, .settings-card { transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) ease, border-color var(--t-fast) ease, background-color var(--t-fast) ease; }
+@media (hover: hover) {
+  .nav-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--role-accent-text); }
+}
+.nav-card:active { transform: scale(0.985); }
+
+/* Navigation: the active pill fades in, the More menu pops. */
+.bottom-nav .nav-btn { transition: background-color var(--t-fast) ease, color var(--t-fast) ease; }
+@keyframes pop-in { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
+.nav-more-menu:not([hidden]) { animation: pop-in var(--t-fast) var(--ease-out); transform-origin: bottom center; }
+
+/* Learned state and flags. */
+.word-card { transition: background-color var(--t-med) ease, border-color var(--t-med) ease; }
+.word-card.is-known .word-state-icon { animation: cb-pop var(--t-med) var(--ease-out); }
+.review-flag.active .icon, .flag-btn.active .icon { animation: flag-pop var(--t-fast) var(--ease-out); }
+.flag-btn { transition: background-color var(--t-fast) ease, color var(--t-fast) ease, transform var(--t-fast) var(--ease-out); }
+.flag-btn:active { transform: scale(0.92); }
+
+/* Switch thumb + track, palette dots, selection ring. */
+.switch-track { transition: background-color var(--t-med) var(--ease-out); }
+.switch-track::after { transition: transform var(--t-med) var(--ease-out), background-color var(--t-med) ease; }
+
+/* Theme / palette change: colors fade for a moment instead of jumping. ui.js adds
+   .theme-fade to <html> for ~300 ms only while Animations are on. */
+html.theme-fade, html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after {
+  transition: background-color 260ms ease, border-color 260ms ease, color 260ms ease, fill 260ms ease, stroke 260ms ease, box-shadow 260ms ease !important;
+}
+
+/* ======================================================================
+   Animations off — chosen in Settings (<html data-motion="off">) or requested
+   by the device (prefers-reduced-motion). Nothing moves and nothing fades:
+   state changes become instant.
+   ====================================================================== */
+html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
+  animation: none !important; transition: none !important; scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
