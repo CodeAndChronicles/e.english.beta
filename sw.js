@@ -12,7 +12,7 @@
    so user learning data is out of its reach by construction. */
 importScripts('JavaScript/version.js');
 
-const CACHE_NAME = self.EE_CACHE_NAME;       // e.g. "e-english-v11.3-js3" (app version 11.3 + JavaScript loading version 3)
+const CACHE_NAME = self.EE_CACHE_NAME;       // e.g. "e-english-v11.3.1-js4" (app version 11.3.1 + JavaScript loading version 4)
 const CACHE_PREFIX = self.EE_CACHE_PREFIX;   // "e-english-"
 
 // JavaScript files are requested as "<file>.js?js=<EE_JS_VERSION>" (index.html), so the

@@ -81,6 +81,7 @@
 
   /* ---- Layout ---- */
   --nav-height: 60px;
+  --unit-card-h: 119px;      /* Home unit card height — the skeleton uses the same value */
   --nav-gap: 8px;           /* the floating bottom bar's distance from the screen edge */
   --content-max-width: 720px;
 
@@ -406,3 +407,37 @@
   --role-disabled-text: var(--color-text-muted);
   --role-on-danger: #FFFFFF;                          /* text on a solid danger button (semantic, not palette) */
 }
+
+
+/* ======================================================================
+   Version 11.3.1 — the rest of the role-token layers
+   Layers: base surfaces · text · palette identity · semantic · interactive · data
+   · content-specific. Six supporting hues are MIXED with the selected palette's accent
+   (color-mix), so every palette gives the whole interface its own coordinated tones
+   while the hues stay recognisable. Semantic colors (success / warning / danger / review)
+   keep their own variables and are not touched by the palette.
+   ====================================================================== */
+:root {
+  --hue-blue: #2C6BA8; --hue-green: #2E8B57; --hue-amber: #B8790A; --hue-purple: #7A55C2; --hue-pink: #C2487E; --hue-teal: #0E8A86;
+  --role-text-secondary: var(--color-text-muted);
+  --role-text-disabled: color-mix(in srgb, var(--color-text-muted) 70%, var(--color-surface));
+  --role-text-inverse: var(--color-primary-contrast);
+  --role-info: var(--hue-blue);
+}
+:root[data-theme="dark"] {
+  --hue-blue: #7DB3EA; --hue-green: #5FCB8A; --hue-amber: #E3B04B; --hue-purple: #B79CF0; --hue-pink: #F08FB8; --hue-teal: #4FD1C5;
+}
+:root {
+  /* palette identity: the accent leaning towards each supporting hue */
+  --pal-1: color-mix(in srgb, var(--color-ink) 40%, var(--hue-blue));
+  --pal-2: color-mix(in srgb, var(--color-ink) 40%, var(--hue-green));
+  --pal-3: color-mix(in srgb, var(--color-ink) 40%, var(--hue-amber));
+  --pal-4: color-mix(in srgb, var(--color-ink) 40%, var(--hue-purple));
+  --pal-5: color-mix(in srgb, var(--color-ink) 40%, var(--hue-pink));
+  --pal-6: color-mix(in srgb, var(--color-ink) 40%, var(--hue-teal));
+  /* data visualisation */
+  --viz-1: var(--role-accent); --viz-2: var(--pal-2); --viz-3: var(--pal-3); --viz-4: var(--pal-4);
+  --viz-track: var(--color-surface-alt);
+}
+
+@media (min-width: 1024px) { :root { --unit-card-h: 137px; } }

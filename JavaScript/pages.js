@@ -53,7 +53,8 @@
     'If the button does not open WhatsApp, search for this username in WhatsApp.': 'إذا لم يفتح الزر واتساب، ابحث عن اسم المستخدم هذا داخل واتساب.',
     'Version': 'الإصدار', 'Information': 'المعلومات', "What's New": 'الجديد', 'Features': 'المزايا',
     'Offline-first': 'يعمل بدون إنترنت', 'Installable web app': 'تطبيق ويب قابل للتثبيت', 'Local data': 'بيانات محلية',
-    'No account': 'بدون حساب', 'English + Arabic': 'إنجليزي + عربي', 'Light & dark': 'فاتح وداكن'
+    'Local learning data': 'بيانات تعلّم محلية', 'Progress tracking': 'تتبّع التقدّم',
+    'English + Arabic': 'إنجليزي + عربي', 'Light & dark': 'فاتح وداكن'
   });
 
   /* ---------------- Feedback ---------------- */
@@ -99,7 +100,7 @@
     ]);
     page.appendChild(contact);
 
-    const grid = h('div', { class: 'fb-grid' });
+    const grid = h('div', { class: 'fb-grid masonry' });
     // 2) What can be sent.
     grid.appendChild(h('section', { class: 'card info-card' }, [
       titleWithIcon('message-circle', T('What you can send')),
@@ -125,55 +126,37 @@
   }
 
   /* ---------------- Info: version, changelog, purpose ---------------- */
-  // Version 11.3 changelog — only what this release actually changed.
+  // Version 11.3.1 changelog — only what this release actually changed.
   const CHANGELOG = {
     en: [
-      'Complete color system: every screen follows the chosen palette, in Light and Dark.',
-      'Real animations (screens, cards, navigation, selectors, switches, flags) controlled by the Animations setting and by your device\u2019s reduced-motion preference.',
-      'New navigation: a fully rounded floating bar with a More menu when items do not fit; language and theme circles beside it on desktop and at the top on phones.',
-      'Info redesigned: feature tags, a numbered Study Method, and parts-of-speech cards.',
-      'Settings redesigned into cards, with Export, Import and Delete All Data in their own section at the bottom. Device and browser details are gone.',
-      'Review now uses the flag button; an unflagged word stays for 3 seconds so you can flag it again.',
-      'Home shows the total number of words in each unit.',
-      'Switching language also works on the screen shown when the lessons cannot load from a file.'
+      'Cards now size to their own content, so a short card no longer leaves a blank gap beside a tall one, and they glide to new places when the window is resized.',
+      'The chosen palette now colors the whole app: cards, tags, numbered steps, progress and statistics.',
+      'Palette options are capsules with a swatch and a visible name; selectors work like radio groups and switches show On or Off.',
+      'Progress bars fill smoothly, the navigation highlight slides between pages, and the loading skeleton matches the Home screen.',
+      'A quick Keep screen awake button joins the language and theme buttons, in step with Settings.',
+      'Info has a three-sentence description and six feature tags; Study Method is now a set of independent cards.'
     ],
     ar: [
-      'نظام ألوان متكامل: كل الشاشات تتبع اللوحة المختارة، في الوضعين الفاتح والداكن.',
-      'حركات حقيقية (الشاشات والبطاقات والتنقل وأزرار الاختيار والمفاتيح والأعلام) يتحكم بها إعداد الحركة وتفضيل جهازك لتقليل الحركة.',
-      'تنقل جديد: شريط عائم بحواف دائرية كاملة مع قائمة المزيد عند ضيق المساحة، ودائرتا اللغة والمظهر بجانبه على الحاسوب وفي أعلى الشاشة على الهاتف.',
-      'إعادة تصميم المعلومات: وسوم المزايا، وطريقة مذاكرة مرقّمة، وبطاقات أقسام الكلام.',
-      'إعادة تصميم الإعدادات في بطاقات، مع التصدير والاستيراد وحذف كل البيانات في قسم مستقل بالأسفل. وأُزيلت تفاصيل الجهاز والمتصفح.',
-      'تستخدم المراجعة الآن زر العلم؛ والكلمة التي أزلتَ علمها تبقى 3 ثوانٍ لتتمكن من وضع العلم عليها مرة أخرى.',
-      'تعرض الشاشة الرئيسية إجمالي عدد كلمات كل وحدة.',
-      'تبديل اللغة يعمل أيضًا في الشاشة التي تظهر عندما يتعذر تحميل الدروس من ملف.'
+      'تتحدد أحجام البطاقات الآن بحسب محتواها، فلا تترك بطاقة قصيرة فراغًا بجانب بطاقة طويلة، وتنتقل بسلاسة إلى أماكنها الجديدة عند تغيير حجم النافذة.',
+      'اللوحة المختارة تلوّن التطبيق كله الآن: البطاقات والوسوم والخطوات المرقّمة والتقدّم والإحصائيات.',
+      'خيارات اللوحات صارت كبسولات بعينة لون واسم ظاهر؛ وتعمل أزرار الاختيار كمجموعات اختيار، وتعرض المفاتيح حالة تشغيل أو إيقاف.',
+      'تمتلئ أشرطة التقدّم بسلاسة، ويتحرك تمييز التنقل بين الصفحات، ويطابق هيكل التحميل الشاشة الرئيسية.',
+      'انضم زر سريع لإبقاء الشاشة مضاءة إلى زرّي اللغة والمظهر، ويتزامن مع الإعدادات.',
+      'تحتوي المعلومات على وصف من ثلاث جمل وست وسوم للمزايا؛ وصارت طريقة المذاكرة بطاقات مستقلة.'
     ]
   };
 
-  // Exactly 10 sentences per language (one sentence per array item).
+  // Exactly 3 sentences per language (one sentence per array item).
   const PURPOSE = {
     en: [
-      'E.English is a free study website that helps you learn English step by step on your own device.',
-      'Its content is organized into units and lessons that cover vocabulary, synonyms and antonyms, idioms and phrasal verbs, and derivatives.',
-      'In every lesson you read each word with its meaning and part of speech, and mark the words you have learned.',
-      'You can practice with a full quiz on the whole lesson, or with a selected quiz built only from the words you have marked as learned.',
-      'Words you miss or flag are collected in a review list so you can come back to them.',
-      'Your progress is tracked for every unit, lesson and content type, and the statistics page shows how much you have completed.',
-      'Quiz history keeps your latest results so you can compare your scores and see exactly which answers were wrong.',
-      'The search box finds any word quickly and takes you straight to its place in the lessons.',
-      'Settings let you choose the language, light or dark mode, an accent color and the font style, and back up or restore your data.',
-      'Together these tools help you build a steady study habit and remember new English words for longer.'
+      'E.English is a free study website that helps you learn English vocabulary step by step, with lessons organized into units.',
+      'You can practice with quizzes, review the words you missed, and follow your progress and quiz history in Statistics.',
+      'Everything is saved on your own device, works offline after your first visit, and can be used in English or Arabic.'
     ],
     ar: [
-      'E.English موقع مجاني للمذاكرة يساعدك على تعلّم اللغة الإنجليزية خطوة بخطوة على جهازك.',
-      'ينقسم محتواه إلى وحدات ودروس تشمل المفردات والمترادفات والأضداد والتعابير والأفعال المركّبة والمشتقات.',
-      'في كل درس تقرأ كل كلمة مع معناها ونوعها، وتحدّد الكلمات التي حفظتها.',
-      'يمكنك التدرّب باختبار كامل على الدرس كله، أو باختبار محفوظات يتكوّن فقط من الكلمات التي حدّدتها كمحفوظة.',
-      'الكلمات التي أخطأت فيها أو وضعت عليها علامة تُجمع في قائمة مراجعة لتعود إليها.',
-      'يُتابَع تقدّمك في كل وحدة ودرس ونوع محتوى، وتعرض صفحة الإحصائيات مقدار ما أنجزته.',
-      'يحتفظ سجل الاختبارات بآخر نتائجك لتقارن درجاتك وترى بالضبط أي الإجابات كانت خاطئة.',
-      'يجد مربع البحث أي كلمة بسرعة ويأخذك مباشرة إلى مكانها في الدروس.',
-      'تتيح لك الإعدادات اختيار اللغة والوضع الفاتح أو الداكن ولون التمييز ونمط الخط، ونسخ بياناتك احتياطيًا أو استعادتها.',
-      'تساعدك هذه الأدوات معًا على بناء عادة مذاكرة ثابتة وتذكّر الكلمات الإنجليزية الجديدة لوقت أطول.'
+      'E.English موقع مجاني لمذاكرة مفردات اللغة الإنجليزية خطوة بخطوة، ودروسه منظمة في وحدات.',
+      'يمكنك التدرّب بالاختبارات ومراجعة الكلمات التي أخطأت فيها ومتابعة تقدّمك وسجل اختباراتك في الإحصائيات.',
+      'يُحفظ كل شيء على جهازك، ويعمل بدون إنترنت بعد زيارتك الأولى، ويمكن استخدامه بالعربية أو الإنجليزية.'
     ]
   };
 
@@ -182,8 +165,8 @@
   // (standalone) + service worker; local data = progress kept in the browser only;
   // no account = there is no sign-in anywhere; languages = i18n; themes = Light/Dark/System.
   const FEATURES = [
-    ['wifi-off', 'Offline-first'], ['smartphone', 'Installable web app'], ['hard-drive', 'Local data'],
-    ['shield-check', 'No account'], ['languages', 'English + Arabic'], ['sun-moon', 'Light & dark']
+    ['wifi-off', 'Offline-first', 'offline'], ['smartphone', 'Installable web app', 'install'], ['hard-drive', 'Local learning data', 'local'],
+    ['languages', 'English + Arabic', 'lang'], ['chart-column', 'Progress tracking', 'progress'], ['sun-moon', 'Light & dark', 'theme']
   ];
 
   function titleWithIcon(iconName, text) {
@@ -201,7 +184,7 @@
         version ? h('span', { class: 'version-badge' }, [h('span', { class: 'version-badge-label', text: T('Version') }), h('strong', { text: version })]) : null
       ]),
       h('ul', { class: 'feature-tags', 'aria-label': T('Features') }, FEATURES.map(function (f) {
-        return h('li', { class: 'feature-tag' }, [icon(f[0]), h('span', { text: T(f[1]) })]);
+        return h('li', { class: 'feature-tag', 'data-tag': f[2] }, [icon(f[0]), h('span', { text: T(f[1]) })]);
       })),
       h('p', { class: 'about-purpose', text: pick(PURPOSE).join(' ') })
     ]);
@@ -209,7 +192,7 @@
       h('div', { class: 'about-head' }, [titleWithIcon('sparkles', T("What's New"))]),
       h('ol', { class: 'changelog' }, pick(CHANGELOG).map(function (line) { return h('li', { text: line }); }))
     ]);
-    return h('div', { class: 'about-grid' }, [info, news]);
+    return h('div', { class: 'about-grid masonry' }, [info, news]);
   }
 
   global.UI = global.UI || {};

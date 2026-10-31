@@ -31,12 +31,23 @@
   // Text comes from JavaScript/i18n.js (English text is the key; Arabic when selected).
   const T = global.I18n.t;
   function plural(n, one, many) { return n + ' ' + global.I18n.plural(n, one, many); }
+  // Motion gate: the app's own Animations setting AND the device's reduced-motion request.
+  function motionOK() {
+    return UX.getAnimationsEnabled() && !(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+  // A NEW progress fill grows from 0 to its value once; later updates are plain width
+  // changes (the CSS transition animates those), so unrelated rerenders never replay it.
+  function growFill(fill, widthStr) {
+    if (!motionOK()) { fill.style.width = widthStr; return; }
+    fill.style.width = '0%';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = widthStr; }); });
+  }
   function tmin(s) { return String(s).replace(/\bmin\b/, T('min')); }   // "14–20 min" → Arabic unit
   // Pure formatting / labels only (no logic, no state) come from the quiz
   // engine so a score, a percentage or a clock is written the same everywhere.
   const QE = global.QuizEngine;
 
-  const el = { screen: null, nav: null, sideNav: null, themeBtn: null, langBtn: null };
+  const el = { screen: null, nav: null, sideNav: null, themeBtn: null, langBtn: null, awakeBtn: null };
   const NAV_ICONS = { home: 'house', statistics: 'chart-column', history: 'history', settings: 'settings', info: 'info', readme: 'book-open-text', feedback: 'message-circle' };
   let route = { screen: 'home' };
   let lessonProgressRef = null; // { unit, lessonKey, fillEl, textEl } — live-updated, not rebuilt
@@ -134,9 +145,96 @@
     moreBtn.hidden = false;
     syncMoreActive();
   }
+  /* One sliding pill marks the active item (or "More" when the active item is inside it). */
+  let navInd = null;
+  function setupNavIndicator() {
+    if (!el.nav || navInd) return;
+    navInd = h('span', { class: 'nav-indicator', 'aria-hidden': 'true' });
+    el.nav.insertBefore(navInd, el.nav.firstChild);
+  }
+  function positionIndicator() {
+    if (!navInd || el.nav.hidden) return;
+    let target = el.nav.querySelector(':scope > .nav-btn.active:not([hidden])');
+    if (!target && moreBtn && !moreBtn.hidden && moreBtn.classList.contains('active')) target = moreBtn;
+    if (!target) { navInd.style.opacity = '0'; return; }
+    const n = el.nav.getBoundingClientRect(), r = target.getBoundingClientRect();
+    navInd.style.setProperty('--ix', (r.left - n.left) + 'px');
+    navInd.style.setProperty('--iy', (r.top - n.top) + 'px');
+    navInd.style.width = r.width + 'px';
+    navInd.style.height = r.height + 'px';
+    navInd.style.opacity = '1';
+    // first placement must not slide in from the corner
+    if (!navInd.dataset.placed) { navInd.classList.add('no-anim'); void navInd.offsetWidth; navInd.dataset.placed = '1'; requestAnimationFrame(function () { navInd.classList.remove('no-anim'); }); }
+  }
+
+  /* Screen motion: entrance classes only when a screen is really (re)drawn, and a small
+     FLIP routine so cards glide to their new places when the window is resized. */
+  const flip = { rects: new Map(), timer: 0, rec: 0 };
+  function flipItems() { return el.screen.querySelectorAll('.masonry > *, .card-grid > *'); }
+  function docRect(e) { const r = e.getBoundingClientRect(); return { x: r.left + global.scrollX, y: r.top + global.scrollY }; }
+  function flipRecord() {
+    flip.rects = new Map();
+    flipItems().forEach(function (e) { flip.rects.set(e, docRect(e)); });
+  }
+  function flipPlay() {
+    flipItems().forEach(function (e) { e.getAnimations().forEach(function (a) { if (a.id === 'flip') a.cancel(); }); });
+    const ok = motionOK();
+    const next = new Map();
+    flipItems().forEach(function (e) {
+      const n = docRect(e), o = flip.rects.get(e);
+      next.set(e, n);
+      if (ok && o && (Math.abs(o.x - n.x) > 2 || Math.abs(o.y - n.y) > 2) && e.animate) {
+        const a = e.animate([{ transform: 'translate(' + (o.x - n.x) + 'px,' + (o.y - n.y) + 'px)' }, { transform: 'none' }], { duration: 320, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+        a.id = 'flip';
+      }
+    });
+    flip.rects = next;
+  }
+  function setupScreenMotion() {
+    let enterTimer = 0;
+    const mo = new MutationObserver(function (list) {
+      let direct = false;
+      list.forEach(function (m) { if (m.target === el.screen) direct = true; });
+      if (direct && motionOK()) {
+        el.screen.classList.add('is-entering');
+        clearTimeout(enterTimer);
+        enterTimer = setTimeout(function () { el.screen.classList.remove('is-entering'); }, 900);
+      }
+      clearTimeout(flip.rec);                       // remember where cards sit once things settle
+      flip.rec = setTimeout(flipRecord, 120);
+    });
+    mo.observe(el.screen, { childList: true, subtree: true });
+    global.addEventListener('resize', function () {
+      clearTimeout(flip.timer);
+      flip.timer = setTimeout(flipPlay, 90);       // once the resize settles — never per frame
+    });
+  }
+
+  /* Quick "keep screen awake" button in the floating group: same state and same routine as Settings. */
+  function setupAwakeButton() {
+    el.awakeBtn = document.getElementById('awake-toggle-btn');
+    if (!el.awakeBtn) return;
+    if (!el.awakeBtn.querySelector('.icon')) el.awakeBtn.appendChild(icon('lightbulb'));
+    el.awakeBtn.addEventListener('click', function () {
+      if (global.UI && global.UI.applyKeepAwake) global.UI.applyKeepAwake(!UX.getKeepAwake());
+    });
+    UX.on('keep-awake-changed', syncAwakeButton);
+    syncAwakeButton();
+  }
+  function syncAwakeButton() {
+    if (!el.awakeBtn) return;
+    const on = UX.getKeepAwake();
+    el.awakeBtn.classList.toggle('active', on);
+    el.awakeBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    const label = T('Keep screen awake') + ': ' + (on ? T('On') : T('Off'));
+    el.awakeBtn.setAttribute('title', label);
+    el.awakeBtn.setAttribute('aria-label', label);
+  }
+
   function syncMoreActive() {
     if (!moreBtn) return;
     moreBtn.classList.toggle('active', !!moreMenu.querySelector('.nav-btn.active'));
+    positionIndicator();
   }
 
   /* ---------------- Theme ----------------
@@ -274,15 +372,18 @@
   }
 
   /* ================= Skeleton ================= */
+  // Shown only while the lessons are really being loaded (see init). Same structure and
+  // sizes as Home (header, search, unit-card grid), so nothing jumps when it is replaced.
   function renderSkeleton() {
     route = { screen: 'skeleton' };
     clear(el.screen);
     eachNav(function (n) { n.hidden = true; });
-    const wrap = h('div', { class: 'skeleton-wrap' });
+    const wrap = h('div', { class: 'skeleton-wrap', 'aria-busy': 'true', 'aria-label': T('Loading') });
     wrap.appendChild(h('div', { class: 'sk sk-header' }));
     wrap.appendChild(h('div', { class: 'sk sk-search' }));
-    for (let i = 0; i < 3; i++) wrap.appendChild(h('div', { class: 'sk sk-card' }));
-    for (let i = 0; i < 2; i++) wrap.appendChild(h('div', { class: 'sk sk-group' }));
+    const grid = h('div', { class: 'card-grid sk-grid' });
+    for (let i = 0; i < 6; i++) grid.appendChild(h('div', { class: 'sk sk-unit' }));
+    wrap.appendChild(grid);
     el.screen.appendChild(wrap);
   }
 
@@ -336,7 +437,7 @@
         // uses the same counting as Statistics). One bar per UNIT — not per lesson.
         const prog = UX.getUnitProgress(unit.unit);
         const fill = h('div', { class: 'progress-fill' });
-        fill.style.width = pct(prog.progress);
+        growFill(fill, pct(prog.progress));
         const bar = h('div', { class: 'progress-bar progress-sm', role: 'progressbar', 'aria-label': T('Unit ') + unit.unit + ' ' + T('progress'), 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(prog.progress * 100)) }, [fill]);
         const pctEl = h('span', { class: 'unit-progress-pct', text: pctLabel(prog.progress) });
         const vocabEl = h('div', { class: 'nav-card-sub unit-vocab' });
@@ -906,7 +1007,7 @@
     const overallPct = h('span', { class: 'stats-hero-pct', text: pctLabel(stats.overall.progress) });
     const overallText = h('span', { class: 'stats-hero-count', text: T('{k} of {n} words learned', { k: stats.overall.known, n: stats.overall.total }) });
     const overallFill = h('div', { class: 'progress-fill' });
-    overallFill.style.width = pct(stats.overall.progress);
+    growFill(overallFill, pct(stats.overall.progress));
     el.screen.appendChild(h('section', { class: 'card stats-hero tone-blue', 'aria-label': T('Overall progress') }, [
       h('div', { class: 'stats-hero-label', text: T('Overall progress') }),
       h('div', { class: 'stats-hero-main' }, [overallPct, overallText]),
@@ -923,7 +1024,7 @@
       const t = typeStat(stats, type);
       const meta = sectionMeta(type);
       const fill = h('div', { class: 'progress-fill' });
-      fill.style.width = pct(t.progress);
+      growFill(fill, pct(t.progress));
       const count = h('span', { class: 'stats-type-count', text: t.known + ' / ' + t.total + ' ' + T('words') });
       const pctEl = h('span', { class: 'stats-type-pct', text: pctLabel(t.progress) });
       typesList.appendChild(h('div', { class: 'stats-type stats-card-' + type + ' ' + meta.className }, [
@@ -940,7 +1041,7 @@
       icon('flag'), h('span', { text: T('Words to review (') + stats.reviewWords.length + ')' })
     ]);
     el.screen.appendChild(reviewHead);
-    const reviewListEl = h('div', { class: 'review-list' });
+    const reviewListEl = h('div', { class: 'review-list masonry' });
     renderReviewInto(reviewListEl, stats);
     el.screen.appendChild(reviewListEl);
 
@@ -1502,22 +1603,23 @@
     return h('h2', { class: 'info-card-title' }, [h('span', { class: 'card-title-icon', 'aria-hidden': 'true' }, [icon(iconName)]), h('span', { text: text })]);
   }
 
-  // Study Method: the text is unchanged — only its presentation. The lead is a
-  // callout; every transition line opens a "stage"; every step is a numbered row
-  // (custom CSS counter); examples and the aside sit inside the step they belong to.
+  // Study Method: the text is unchanged — only its presentation. No outer container:
+  // a section heading, the lead as its own callout card, then each stage as an
+  // independent card (they flow into columns when there is room). Steps are rows with a
+  // designed, palette-coordinated number badge (CSS counter) — not a default list.
   function renderStudyMethod() {
-    const body = h('div', { class: 'study-text', dir: 'rtl', lang: 'ar' });
-    let stage = null, steps = null, last = null;
+    const stages = [];
+    let stage = null, steps = null, last = null, lead = null;
     function openStage(title) {
-      stage = h('section', { class: 'study-stage' });
-      if (title) stage.appendChild(appendRich(h('h3', { class: 'study-transition' }), title));
-      steps = h('ol', { class: 'study-steps' });
+      stage = h('section', { class: 'card study-stage' });
+      if (title) stage.appendChild(appendRich(h('h3', { class: 'study-transition', dir: 'rtl', lang: 'ar' }), title));
+      steps = h('ol', { class: 'study-steps', dir: 'rtl', lang: 'ar' });
       stage.appendChild(steps);
-      body.appendChild(stage);
+      stages.push(stage);
       last = null;
     }
     STUDY_METHOD.forEach(function (b) {
-      if (b.k === 'lead') { body.appendChild(appendRich(h('p', { class: 'study-lead' }), b.x)); return; }
+      if (b.k === 'lead') { lead = appendRich(h('p', { class: 'study-lead' }), b.x); return; }
       if (b.k === 't') { openStage(b.x); return; }
       if (!stage) openStage(null);
       if (b.k === 'p') {
@@ -1530,15 +1632,14 @@
       const node = appendRich(h('p', attrs), b.x);
       if (last) last.appendChild(node); else steps.appendChild(h('li', { class: 'study-step' }, [node]));
     });
-    // The educational note under the text (the highlighter-colour legend/selector was removed).
-    const legend = h('div', { class: 'hl-legend' }, [
-      h('p', { class: 'hl-note', dir: 'rtl', lang: 'ar', text: HL_NOTE })
-    ]);
-    return h('section', { class: 'card info-card study-card', 'aria-label': T('Study method') }, [
-      cardTitle('notebook-text', T('Study method')),
-      body,
-      legend
-    ]);
+    const kids = [h('h2', { class: 'section-heading' }, [
+      h('span', { class: 'card-title-icon', 'aria-hidden': 'true' }, [icon('notebook-text')]), h('span', { text: T('Study method') })
+    ])];
+    if (lead) kids.push(h('div', { class: 'card study-lead-card', dir: 'rtl', lang: 'ar' }, [lead]));
+    kids.push(h('div', { class: 'study-grid masonry' }, stages));
+    // The educational note (the highlighter-colour legend/selector was removed).
+    kids.push(h('div', { class: 'card study-note-card', dir: 'rtl', lang: 'ar' }, [h('p', { class: 'hl-note', text: HL_NOTE })]));
+    return h('section', { class: 'study-section', 'aria-label': T('Study method') }, kids);
   }
 
   function renderInfo() {
@@ -1593,6 +1694,9 @@
 
     wireNav(el.nav);
     setupMore();
+    setupNavIndicator();
+    setupScreenMotion();
+    setupAwakeButton();
 
     // Theme: applied at boot from the persisted preference (light / dark /
     // system), then driven by the 'theme-changed' event. UX emits that event
@@ -1672,6 +1776,8 @@
       });
       syncThemeButton();
       syncLangButton();
+      syncAwakeButton();
+      layoutNav();
     }
     function syncLangButton() {
       if (!el.langBtn) return;

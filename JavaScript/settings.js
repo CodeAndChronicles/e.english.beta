@@ -50,10 +50,22 @@
     if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
   }
   function requestWakeLock() {
-    if (!('wakeLock' in navigator)) return Promise.reject(new Error('unsupported'));
+    if (!navigator.wakeLock || typeof navigator.wakeLock.request !== 'function') return Promise.reject(new Error('unsupported'));
     return navigator.wakeLock.request('screen').then(function (wl) {
       wakeLock = wl;
       wl.addEventListener('release', function () { wakeLock = null; });
+    });
+  }
+  // ONE routine for both controls (the quick button in the floating group and the
+  // Settings switch). The saved state lives only in UX; this just applies it.
+  // Resolves true when the lock is held, false when switched off or unsupported.
+  function applyKeepAwake(on) {
+    UX.setKeepAwake(on);                       // emits 'keep-awake-changed' -> every control re-syncs
+    if (!on) { releaseWakeLock(); return Promise.resolve(false); }
+    return requestWakeLock().then(function () { return true; }).catch(function () {
+      UX.setKeepAwake(false);                  // never show "on" when the lock could not be taken
+      showToast('This browser does not support keeping the screen awake', 'warn');
+      return false;
     });
   }
   document.addEventListener('visibilitychange', function () {
@@ -86,43 +98,55 @@
   }
 
   /* ---------------- Small reusable row builders ---------------- */
-  function settingsRow(iconName, title, sub, control, tone) {
-    return h('div', { class: 'settings-row' }, [
-      h('span', { class: 'settings-row-icon ' + (tone || 'tone-blue') }, [icon(iconName)]),
-      h('div', { class: 'settings-row-text' }, [
-        h('div', { class: 'settings-row-title', text: T(title) }),
-        sub ? h('div', { class: 'settings-row-sub', text: T(sub) }) : null
-      ]),
-      control
-    ]);
-  }
 
+  // A segmented control is a radio group: one option selected, arrow keys move
+  // (and select), only the selected option is in the tab order. The pill slides.
   function segmented(options, activeValue, onChange) {
-    const wrap = h('div', { class: 'segmented' });
+    const wrap = h('div', { class: 'segmented', role: 'radiogroup' });
     wrap.appendChild(h('span', { class: 'seg-thumb', 'aria-hidden': 'true' }));
     wrap.style.setProperty('--n', String(options.length));
+    function select(btn, fire) {
+      setSegActive(wrap, btn.dataset.value);
+      if (fire) onChange(btn.dataset.value);
+    }
     options.forEach(function (opt) {
       const btn = h('button', {
-        class: 'segmented-btn' + (opt.value === activeValue ? ' active' : ''),
-        onclick: function () {
-          wrap.querySelectorAll('.segmented-btn').forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
-          btn.classList.add('active');
-          btn.setAttribute('aria-pressed', 'true');
-          syncThumb(wrap);
-          onChange(opt.value);
+        type: 'button', class: 'segmented-btn', role: 'radio',
+        onclick: function () { select(btn, true); },
+        onkeydown: function (e) {
+          const rtl = document.documentElement.dir === 'rtl';
+          let step = 0;
+          if (e.key === 'ArrowRight') step = rtl ? -1 : 1;
+          else if (e.key === 'ArrowLeft') step = rtl ? 1 : -1;
+          else if (e.key === 'ArrowDown') step = 1;
+          else if (e.key === 'ArrowUp') step = -1;
+          if (!step) return;
+          e.preventDefault();
+          const all = Array.prototype.slice.call(wrap.querySelectorAll('.segmented-btn'));
+          const next = all[(all.indexOf(btn) + step + all.length) % all.length];
+          next.focus(); select(next, true);
         }
       }, [
         opt.icon ? icon(opt.icon, 'segmented-icon') : null,
         h('span', { class: 'segmented-label', text: opt.label }),
         opt.sub ? h('span', { class: 'segmented-sub', text: opt.sub }) : null
       ]);
-      btn.setAttribute('aria-pressed', opt.value === activeValue ? 'true' : 'false');
       btn.dataset.value = opt.value;
       if (opt.title) btn.setAttribute('title', opt.title);
       wrap.appendChild(btn);
     });
-    syncThumb(wrap);
+    setSegActive(wrap, activeValue);
     return wrap;
+  }
+  function setSegActive(wrap, value) {
+    wrap.querySelectorAll('.segmented-btn').forEach(function (b) {
+      const on = b.dataset.value === value;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+    syncThumb(wrap);
   }
   // The selected-state pill slides to the active option (CSS transition on --i).
   function syncThumb(wrap) {
@@ -133,9 +157,34 @@
 
   function toggleSwitch(checked, onChange, label) {
     const input = h('input', { type: 'checkbox', class: 'switch-input visually-hidden', role: 'switch', 'aria-label': label ? T(label) : T('Toggle') });
+    const state = h('span', { class: 'switch-state', 'aria-hidden': 'true' });
     input.checked = !!checked;
-    input.addEventListener('change', function () { onChange(input.checked); });
-    return h('label', { class: 'switch' }, [input, h('span', { class: 'switch-track' })]);
+    function paint() { state.textContent = input.checked ? T('On') : T('Off'); }
+    paint();
+    input.addEventListener('change', function () { paint(); onChange(input.checked); });
+    const lab = h('label', { class: 'switch' }, [state, input, h('span', { class: 'switch-track' })]);
+    lab._input = input; lab._paint = paint;
+    return lab;
+  }
+  // A labelled option row: title + hint on the start side, the control on the end side.
+  function switchRow(title, sub, control) {
+    return h('div', { class: 'switch-row' }, [
+      h('div', { class: 'settings-row-text' }, [
+        h('div', { class: 'settings-row-title', text: T(title) }),
+        sub ? h('div', { class: 'settings-row-sub', text: T(sub) }) : null
+      ]),
+      control
+    ]);
+  }
+  // A stacked field: title + hint, then the control underneath (segmented / chips).
+  function field(title, sub, control, extra) {
+    return h('div', { class: 'field' }, [
+      h('div', { class: 'field-head' }, [
+        h('div', { class: 'settings-row-title', text: T(title) }),
+        sub ? h('div', { class: 'settings-row-sub', text: T(sub) }) : null
+      ]),
+      control, extra || null
+    ]);
   }
 
   /* ================= Settings screen ================= */
@@ -148,8 +197,7 @@
 
     screen.appendChild(h('header', { class: 'app-header' }, [h('h1', { class: 'title-lg', text: T('Settings') })]));
 
-    /* ---- Appearance ---- */
-    // Every group is its own card with an icon heading — same card language as Info / Feedback.
+    /* ---- Cards: Appearance, Behavior, Storage — then Data management last ---- */
     function groupCard(iconName, title, extra) {
       const c = h('section', { class: 'card settings-card' + (extra ? ' ' + extra : ''), 'aria-label': T(title) });
       c.appendChild(h('h2', { class: 'info-card-title settings-card-title' }, [
@@ -157,33 +205,23 @@
       ]));
       return c;
     }
-    const langCard = groupCard('languages', 'Language');
     const appearanceCard = groupCard('palette', 'Appearance');
-    const motionCard = groupCard('sparkles', 'Animations');
-    const studyCard = groupCard('lightbulb', 'Study');
+    const motionCard = groupCard('sliders-horizontal', 'Behavior');
+    const studyCard = motionCard;            // keep-awake lives in the same Behavior card
     const storageCard = groupCard('database', 'Local storage');
     const dataCard = groupCard('download', 'Data management', 'settings-data-card');
 
-    langCard.appendChild(h('p', { class: 'settings-row-sub settings-card-sub', text: T('Choose the language of the whole interface') }));
+    // Language
     const langSeg = segmented(
       [{ value: 'ar', label: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629' }, { value: 'en', label: 'English' }],
       UX.getLanguage(),
       function (val) { UX.setLanguage(val); }
     );
     langSeg.classList.add('segmented-full', 'segmented-lang');
-    langSeg.setAttribute('role', 'group');
     langSeg.setAttribute('aria-label', T('Language'));
-    langCard.appendChild(h('div', { class: 'settings-seg-wrap' }, [langSeg]));
+    appearanceCard.appendChild(field('Language', 'Choose the language of the whole interface', langSeg));
 
-    const themeRow = h('div', { class: 'settings-row settings-row-block' }, [
-      h('span', { class: 'settings-row-icon tone-blue' }, [icon('sun-moon')]),
-      h('div', { class: 'settings-row-text' }, [
-        h('div', { class: 'settings-row-title', text: T('Theme mode') }),
-        h('div', { class: 'settings-row-sub', text: T('Light, dark, or follow your device') })
-      ])
-    ]);
-    themeRow.classList.add('settings-row-flush');
-    appearanceCard.appendChild(themeRow);
+    // Theme mode
     const themeSeg = segmented(
       [
         { value: 'light', label: T('Light'), icon: 'sun' },
@@ -194,19 +232,11 @@
       function (val) { UX.setTheme(val); }
     );
     themeSeg.classList.add('segmented-full', 'segmented-theme');
-    themeSeg.setAttribute('role', 'group');
-    themeSeg.setAttribute('aria-label', 'Theme mode');
-    appearanceCard.appendChild(h('div', { class: 'settings-seg-wrap' }, [themeSeg]));
+    themeSeg.setAttribute('aria-label', T('Theme mode'));
+    appearanceCard.appendChild(field('Theme mode', 'Light, dark, or follow your device', themeSeg));
 
-    /* ---- Font style: O2 (default) / Regular / Bold ----
-       One preference (UX.getFontMode). ui.js turns it into <html data-font>,
-       and root.css maps that to the two weight roles the whole app uses. */
-    appearanceCard.appendChild(h('div', { class: 'settings-row settings-row-block settings-row-flush' }, [
-      h('span', { class: 'settings-row-icon tone-blue' }, [icon('type')]),
-      h('div', { class: 'settings-row-text' }, [
-        h('div', { class: 'settings-row-title', text: T('Font style') })
-      ])
-    ]));
+    /* Font style: Auto (stored value 'o2', default) / Regular / Bold. One preference
+       (UX.getFontMode); ui.js turns it into <html data-font>. */
     const fontSeg = segmented(
       [
         { value: 'o2', label: T('Auto') },
@@ -217,78 +247,52 @@
       function (val) { UX.setFontMode(val); }
     );
     fontSeg.classList.add('segmented-full', 'segmented-font');
-    fontSeg.setAttribute('role', 'group');
-    fontSeg.setAttribute('aria-label', 'Font style');
+    fontSeg.setAttribute('aria-label', T('Font style'));
     const fontHelp = h('ul', { class: 'font-help' }, [
       h('li', {}, [h('strong', { text: T('Auto') }), h('span', { class: 'font-help-tag', text: T('Recommended') }), ' \u2014 ' + T('Bold headings, Regular text.')]),
       h('li', {}, [h('strong', { text: T('Regular') }), ' \u2014 ' + T('All text Regular.')]),
       h('li', {}, [h('strong', { text: T('Bold') }), ' \u2014 ' + T('All text Bold.')])
     ]);
-    appearanceCard.appendChild(h('div', { class: 'settings-seg-wrap' }, [fontSeg, fontHelp]));
+    appearanceCard.appendChild(field('Font style', null, fontSeg, fontHelp));
 
-    const colorRow = h('div', { class: 'settings-row settings-row-block' }, [
-      h('span', { class: 'settings-row-icon tone-blue' }, [icon('swatch-book')]),
-      h('div', { class: 'settings-row-text' }, [
-        h('div', { class: 'settings-row-title', text: T('Accent color') }),
-        h('div', { class: 'settings-row-sub', text: T('Default is a neutral graphite. Pick a palette to use one accent everywhere.') })
-      ])
-    ]);
-    colorRow.classList.add('settings-row-flush');
-    appearanceCard.appendChild(colorRow);
-
-    const colorPicker = h('div', { class: 'theme-color-picker', role: 'group', 'aria-label': T('Accent color') });
+    // Accent color: compact capsules, each = round swatch + visible name (real radio inputs)
+    const colorPicker = h('div', { class: 'palette-chips', role: 'radiogroup', 'aria-label': T('Accent color') });
     function markActiveColor() {
       const cur = UX.getThemeColor();
-      colorPicker.querySelectorAll('.theme-color-swatch').forEach(function (b) {
-        const on = b.dataset.color === cur;
-        b.classList.toggle('active', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-        if (on) { const n = colorPicker.querySelector('.palette-name'); if (n) n.textContent = b.dataset.label; }
+      colorPicker.querySelectorAll('.palette-chip').forEach(function (c) {
+        const on = c.dataset.color === cur;
+        c.classList.toggle('active', on);
+        c.querySelector('input').checked = on;
       });
     }
-    function swatchButton(color, label, dotClass) {
-      const b = h('button', {
-        type: 'button', class: 'theme-color-swatch', 'data-color': color, 'data-label': label, title: label, 'aria-label': label,
-        onclick: function () { UX.setThemeColor(color); markActiveColor(); }
-      }, [
-        h('span', { class: 'swatch-dot ' + dotClass })
+    function paletteChip(color, label, dotClass) {
+      const input = h('input', { type: 'radio', name: 'palette', value: color, class: 'chip-input visually-hidden', 'aria-label': label });
+      input.addEventListener('change', function () { UX.setThemeColor(color); markActiveColor(); });
+      return h('label', { class: 'palette-chip', 'data-color': color }, [
+        input, h('span', { class: 'swatch-dot ' + dotClass }), h('span', { class: 'palette-chip-name', text: label }), h('span', { class: 'radio-mark', 'aria-hidden': 'true' })
       ]);
-      return b;
     }
     // "Default" is not a palette: it is the neutral look with no accent picked.
-    // Seven choices in one compact row of round swatches (the selected one gets a ring).
-    const grid = h('div', { class: 'palette-row', role: 'group', 'aria-label': T('Accent color') });
-    grid.appendChild(swatchButton('default', T('Default'), 'swatch-default'));
-    COLOR_ORDER.forEach(function (c) { grid.appendChild(swatchButton(c, T(COLOR_LABELS[c]), 'swatch-' + c)); });
-    colorPicker.appendChild(grid);
-    const colorName = h('div', { class: 'palette-name', 'aria-live': 'polite' });
-    colorPicker.appendChild(colorName);
+    colorPicker.appendChild(paletteChip('default', T('Default'), 'swatch-default'));
+    COLOR_ORDER.forEach(function (c) { colorPicker.appendChild(paletteChip(c, T(COLOR_LABELS[c]), 'swatch-' + c)); });
     // A saved palette from an earlier version is never removed or remapped behind
     // the person's back: it keeps working until they pick one of the seven.
     const cur0 = UX.getThemeColor();
+    let retiredNote = null;
     if (cur0 !== 'default' && COLOR_ORDER.indexOf(cur0) === -1) {
-      colorPicker.appendChild(h('p', { class: 'palette-retired-note' }, [
+      retiredNote = h('p', { class: 'palette-retired-note' }, [
         h('span', { class: 'swatch-dot swatch-' + cur0 }),
         h('span', { text: T('Your current palette ({name}) is no longer offered. Pick one of the seven.', { name: T(COLOR_LABELS[cur0] || cur0) }) })
-      ]));
+      ]);
     }
-    appearanceCard.appendChild(colorPicker);
+    appearanceCard.appendChild(field('Accent color', 'Default is a neutral graphite. Pick a palette to use one accent everywhere.', colorPicker, retiredNote));
     markActiveColor();
 
-    studyCard.appendChild(settingsRow('lightbulb', 'Keep screen awake', 'Stops the screen from turning off while you study', toggleSwitch(
-      UX.getKeepAwake(),
-      function (checked) {
-        UX.setKeepAwake(checked);
-        if (checked) {
-          requestWakeLock().catch(function () {
-            showToast('This browser does not support keeping the screen awake', 'warn');
-          });
-        } else {
-          releaseWakeLock();
-        }
-      }
-      , 'Keep screen awake'
-    ), 'tone-blue'));
+    // Keep screen awake: ONE state (UX) + ONE routine (applyKeepAwake), also driven by
+    // the quick button; this switch just mirrors 'keep-awake-changed'.
+    const awakeSwitch = toggleSwitch(UX.getKeepAwake(), function (checked) { applyKeepAwake(checked); }, 'Keep screen awake');
+    awakeSwitch.classList.add('awake-switch');
+    studyCard.appendChild(switchRow('Keep screen awake', 'Stops the screen from turning off while you study', awakeSwitch));
     /* ---- Animations: on/off + a tiny preview. Off (or the device's reduced-motion
        setting) means no movement anywhere; the preview just stays still. ---- */
     const motionActive = function () { return UX.getAnimationsEnabled() && !(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches); };
@@ -296,7 +300,7 @@
     const reducedNote = h('div', { class: 'settings-row-sub anim-note', text: T('Your device asks for reduced motion, so animations stay off.') });
     reducedNote.hidden = !(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches);
     function syncDemo() { demoBox.classList.toggle('playing', motionActive()); }
-    motionCard.appendChild(settingsRow('sparkles', 'Animations', 'Smooth movement and transitions', h('span', { class: 'anim-controls' }, [demoBox, toggleSwitch(
+    motionCard.appendChild(switchRow('Animations', 'Smooth movement and transitions', h('span', { class: 'anim-controls' }, [demoBox, toggleSwitch(
       UX.getAnimationsEnabled(),
       function (checked) { UX.setAnimationsEnabled(checked); syncDemo(); },
       'Animations'
@@ -331,7 +335,7 @@
       }).catch(function () { storageBar.hidden = true; storageNote.hidden = true; storageText.textContent = T('Storage usage is unavailable in this browser.'); });
     })();
 
-    screen.appendChild(h('div', { class: 'settings-grid' }, [langCard, appearanceCard, motionCard, studyCard, storageCard]));
+    screen.appendChild(h('div', { class: 'settings-grid masonry' }, [appearanceCard, motionCard, storageCard]));
 
     /* ---- Data management: always visible, last section on the page ---- */
     dataCard.appendChild(h('p', { class: 'settings-row-sub settings-card-sub', text: T('Back up your progress, restore it, or erase it from this device.') }));
@@ -392,27 +396,21 @@
   // and the floating button. Whenever the preference changes — from either —
   // the selector (if Settings is open) just reflects it; it keeps no state.
   UX.on('theme-preference-changed', function (pref) {
-    document.querySelectorAll('.segmented-theme .segmented-btn').forEach(function (b) {
-      const on = b.dataset.value === pref;
-      b.classList.toggle('active', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    document.querySelectorAll('.segmented').forEach(syncThumb);
+    document.querySelectorAll('.segmented-theme').forEach(function (w) { setSegActive(w, pref); });
   });
-
-  // Same idea for the font style: the selector only reflects the one preference
-  // (it can also change through an import).
+  // Same idea for the font style (it can also change through an import) and the language.
   UX.on('font-mode-changed', function (mode) {
-    document.querySelectorAll('.segmented-font .segmented-btn').forEach(function (b) {
-      const on = b.dataset.value === mode;
-      b.classList.toggle('active', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    });
-    document.querySelectorAll('.segmented').forEach(syncThumb);
+    document.querySelectorAll('.segmented-font').forEach(function (w) { setSegActive(w, mode); });
+  });
+  // Keep screen awake: whichever control changed it, the Settings switch just mirrors UX.
+  UX.on('keep-awake-changed', function (on) {
+    document.querySelectorAll('.awake-switch').forEach(function (sw) { sw._input.checked = !!on; sw._paint(); });
   });
 
   global.UI = global.UI || {};
   global.UI.renderSettings = render;
+  global.UI.applyKeepAwake = applyKeepAwake;
+  global.UI.keepAwakeHeld = function () { return !!wakeLock; };   // read-only (used to verify real behaviour)
 
   // Best-effort re-acquire on boot if the user had it on last time — most
   // browsers require a user gesture, so this may silently fail and that's

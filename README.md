@@ -2,7 +2,7 @@
 
 **E.English** is a free vocabulary study website for learning English. It works offline after the first visit and keeps all your progress on your own device. There are no accounts and no sign-up.
 
-> **Version 11.3.** Open a lesson, mark the words you have learned, take a quiz, then come back to the words you missed.
+> **Version 11.3.1.** Open a lesson, mark the words you have learned, take a quiz, then come back to the words you missed.
 
 ## What you can do
 
@@ -60,9 +60,9 @@ Type in the search box on Home to find any word or meaning. Pick a result to ope
 ## Settings
 
 - **Language:** English or Arabic. The whole interface changes, including the layout direction. Lesson content (words, meanings, the Arabic study text) is not translated.
-- **Theme mode:** Light, Dark or System. Two round buttons switch language and theme quickly: at the top of the screen on phones and tablets, and beside the navigation bar on desktop. They are hidden during a quiz.
+- **Theme mode:** Light, Dark or System. Three round buttons sit together: **Keep screen awake**, **theme** and **language**. They are at the top of the screen on phones and tablets, and beside the navigation bar on desktop, and they are hidden during a quiz. The Keep screen awake button and the switch in Settings always show the same state.
 - **Font style:** **Auto** (the recommended default: bold headings, regular text), **Regular** or **Bold**.
-- **Accent color:** Default (neutral graphite), Burgundy, Lavender, Sky Blue, Lime, Orange or Teal, in both Light and Dark. Success, warning, error and the Review flag keep their own colors. If an earlier version saved a palette that is no longer offered, it keeps working until you choose a new one.
+- **Accent color:** Default (neutral graphite), Burgundy, Lavender, Sky Blue, Lime, Orange or Teal, shown as named options, in both Light and Dark. The chosen palette colors the whole app (cards, tags, numbered steps, progress), while success, warning, error and the Review flag keep their own colors. Success, warning, error and the Review flag keep their own colors. If an earlier version saved a palette that is no longer offered, it keeps working until you choose a new one.
 - **Animations:** switch movement on or off, with a small preview. If your device asks for reduced motion, animations stay off.
 - **Local storage:** shows how much browser storage the site uses. It is a real measurement from your browser when your browser provides it; otherwise it says the value is unavailable. The bar uses a 1 GB reference scale only for scale, and browsers do not all guarantee 1 GB.
 - **Keep screen awake:** stops the screen from turning off while you study, where your browser supports it.
@@ -70,7 +70,7 @@ Type in the search box on Home to find any word or meaning. Pick a result to ope
 
 ## Info and Feedback
 
-- **Info** shows the app version, six feature tags, what is new in this version, a short description of the site, the Study Method, the parts of speech, and the ownership notice.
+- **Info** shows the app version, six feature tags, a three-sentence description, what is new in this version, the Study Method, the parts of speech, and the ownership notice.
 - **Feedback** explains how to report a bug, suggest an improvement or share an opinion, and has a **Contact me on WhatsApp** button that opens a chat with the developer (`@Ma7mee7o`). The website does not send, collect or store your message.
 
 ## Working offline and updates

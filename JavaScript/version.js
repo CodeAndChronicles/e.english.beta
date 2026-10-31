@@ -11,7 +11,7 @@
    the change goes forward (6 → 7) or backward (7 → 6).
 
    TWO numbers live here and they are NOT the same thing:
-     EE_MODEL_VERSION  the APPLICATION release ("version 11.3"). It is what
+     EE_MODEL_VERSION  the APPLICATION release ("version 11.3.1"). It is what
                        people mean by "the app version".
      EE_JS_VERSION     the JAVASCRIPT LOADING revision ("3"). It is only about
                        how script files are fetched and cached: index.html asks
@@ -29,12 +29,12 @@
        untouched by a version change. */
 (function (root) {
   'use strict';
-  root.EE_MODEL_VERSION = '11.3';
-  root.EE_JS_VERSION = '3';
+  root.EE_MODEL_VERSION = '11.3.1';
+  root.EE_JS_VERSION = '4';
   // Every cache this app ever creates starts with this prefix, so cleanup
   // can be scoped to "our" caches and never touches anything else on the
   // same origin.
   root.EE_CACHE_PREFIX = 'e-english-';
-  // e.g. "e-english-v11.3-js3": app version 11.3, JavaScript loading version 3.
+  // e.g. "e-english-v11.3.1-js4": app version 11.3.1, JavaScript loading version 4.
   root.EE_CACHE_NAME = root.EE_CACHE_PREFIX + 'v' + root.EE_MODEL_VERSION + '-js' + root.EE_JS_VERSION;
 })(typeof self !== 'undefined' ? self : this);

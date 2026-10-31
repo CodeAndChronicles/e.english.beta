@@ -131,7 +131,7 @@
     'Calculating...': 'جارٍ الحساب...',
 
     /* 11.2 */
-    'Auto': 'تلقائي', 'More': 'المزيد', 'Study': 'المذاكرة', 'Data management': 'إدارة البيانات',
+    'Auto': 'تلقائي', 'On': 'مفعّل', 'Off': 'متوقف', 'Behavior': 'السلوك', 'Loading': 'جارٍ التحميل', 'More': 'المزيد', 'Study': 'المذاكرة', 'Data management': 'إدارة البيانات',
     'Back up your progress, restore it, or erase it from this device.': 'انسخ تقدمك احتياطيًا أو استعده أو امسحه من هذا الجهاز.',
     '{n} words in total \u00B7 {k} learned': 'إجمالي {n} كلمة \u00B7 المحفوظ {k}', 'Animations': 'الحركة', 'Smooth movement and transitions': 'حركة وانتقالات سلسة',
     'Your device asks for reduced motion, so animations stay off.': 'جهازك يطلب تقليل الحركة، لذلك تبقى الحركة متوقفة.',

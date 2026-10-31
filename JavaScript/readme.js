@@ -234,7 +234,7 @@
     const wrap = h('div', { class: 'readme-wrap' });
     const hero = h('section', { class: 'card readme-hero' });
     const chips = h('nav', { class: 'readme-toc', 'aria-label': T('Contents') });
-    const sections = h('div', { class: 'readme-sections' });
+    const sections = h('div', { class: 'readme-sections masonry' });
     let current = hero;
     kids.forEach(function (node) {
       if (node.classList && node.classList.contains('md-h2')) {
@@ -272,7 +272,13 @@
 
     screen.appendChild(h('header', { class: 'app-header' }, [h('h1', { class: 'title-lg', text: T('README') })]));
     const holder = h('div', { class: 'readme-holder' });
-    holder.appendChild(h('p', { class: 'text-muted', text: T('Loading README...') }));
+    // Skeleton with the same shape as the finished page (intro card, chips, section cards).
+    const sk = h('div', { class: 'skeleton-wrap', 'aria-busy': 'true', 'aria-label': T('Loading README...') }, [
+      h('div', { class: 'sk sk-readme-hero' }),
+      h('div', { class: 'sk sk-readme-chips' }),
+      h('div', { class: 'masonry' }, [h('div', { class: 'sk sk-readme-card' }), h('div', { class: 'sk sk-readme-card tall' }), h('div', { class: 'sk sk-readme-card' })])
+    ]);
+    holder.appendChild(sk);
     screen.appendChild(holder);
     const lang = global.I18n.getLang();
 

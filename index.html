@@ -34,9 +34,10 @@
   <div id="app">
     <!-- Floating capsule (language + theme): separate from the navigation bar. A round
          button and a rounded-rectangle button share one pill, like a small "island". -->
-    <div id="float-controls" class="float-controls" role="group" aria-label="Language and theme">
-      <button id="theme-toggle-btn" class="float-btn float-btn-round theme-toggle-btn" type="button" aria-label="Theme"></button>
-      <button id="lang-toggle-btn" class="float-btn float-btn-wide lang-toggle-btn" type="button" aria-label="Language"></button>
+    <div id="float-controls" class="float-controls" role="group" aria-label="Quick controls">
+      <button id="awake-toggle-btn" class="float-btn awake-toggle-btn" type="button" aria-pressed="false" aria-label="Keep screen awake"></button>
+      <button id="theme-toggle-btn" class="float-btn theme-toggle-btn" type="button" aria-label="Theme"></button>
+      <button id="lang-toggle-btn" class="float-btn lang-toggle-btn" type="button" aria-label="Language"></button>
     </div>
     <main id="screen-container"></main>
     <nav id="bottom-nav" class="bottom-nav" hidden>

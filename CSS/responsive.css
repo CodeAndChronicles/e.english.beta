@@ -633,7 +633,7 @@ body.quiz-active #bottom-nav { display: none !important; }
    keeps its own tone; with an accent selected every tone becomes that accent
    (root.css), so no bar has a fixed color of its own. */
 .progress-bar { width: 100%; height: 10px; background: var(--color-surface-alt); border-radius: var(--r-pill); overflow: hidden; margin: var(--sp-sm) 0; }
-.progress-fill { height: 100%; background: var(--tone, var(--color-ink)); border-radius: var(--r-pill); transition: width var(--t-med) var(--ease-out); }
+.progress-fill { height: 100%; background: var(--tone, var(--color-ink)); border-radius: var(--r-pill); transition: width 700ms var(--ease-out); }
 .progress-sm { height: 8px; margin: 0; }
 .progress-lg { height: 12px; margin: var(--sp-xs) 0 0; }
 .review-list, .quiz-history-list { display: flex; flex-direction: column; gap: var(--sp-xs); margin-bottom: var(--sp-lg); }
@@ -677,7 +677,7 @@ body.quiz-active #bottom-nav { display: none !important; }
 /* ---------- Mini progress (lesson-scoped Vocabulary progress) ---------- */
 .mini-progress-row { display: flex; align-items: center; gap: var(--sp-xs); margin-top: 4px; }
 .mini-progress { flex: 1; max-width: 140px; height: 6px; background: var(--color-surface-alt); border-radius: var(--r-pill); overflow: hidden; }
-.mini-progress-fill { height: 100%; background: var(--tone, var(--color-ink)); border-radius: var(--r-pill); }
+.mini-progress-fill { height: 100%; background: var(--tone, var(--color-ink)); border-radius: var(--r-pill); transition: width 500ms var(--ease-out); }
 .mini-progress-text { font-size: var(--font-size-xs); color: var(--color-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* ---------- Bottom nav ----------
@@ -722,8 +722,6 @@ body.quiz-active #bottom-nav { display: none !important; }
 .sk { border-radius: var(--r-md); background: var(--color-surface-alt); }
 .sk-header { height: 56px; }
 .sk-search { height: 44px; border-radius: var(--r-pill); }
-.sk-card { height: 72px; }
-.sk-group { height: 120px; }
 
 /* ================= Responsive breakpoints ================= */
 @media (min-width: 640px) {
@@ -945,13 +943,11 @@ body.quiz-active #bottom-nav { display: none !important; }
 .readme-chip { display: inline-flex; align-items: center; min-height: 36px; padding: 4px var(--sp-sm); border-radius: var(--r-pill); background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-ink); font-size: var(--font-size-sm); text-decoration: none; }
 .readme-chip:hover { background: var(--color-mint); }
 .readme-chip:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
-.readme-sections { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); align-items: start; }
 .readme-section { padding: var(--sp-md); min-width: 0; }
 .readme-section .md-h2 { margin: 0 0 var(--sp-sm); font-size: var(--font-size-lg); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-xs); }
 .readme-section .md-body, .readme-hero .md-body { max-width: none; }
 .readme-section > :last-child, .readme-hero > :last-child { margin-bottom: 0; }
 .readme-section .md-h3 { margin-top: var(--sp-md); }
-@media (min-width: 1100px) { .readme-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .feedback-page { display: flex; flex-direction: column; gap: var(--sp-sm); }
 .fb-contact { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-xs); }
@@ -962,8 +958,6 @@ body.quiz-active #bottom-nav { display: none !important; }
 .fb-username { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-xs); }
 .fb-username-text { font-family: var(--font-en); direction: ltr; unicode-bidi: isolate; padding: 2px 10px; border-radius: var(--r-pill); background: var(--color-mint); color: var(--color-ink); }
 .fb-note { margin: 0; line-height: 1.5; }
-.fb-grid { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); align-items: start; }
-@media (min-width: 760px) { .fb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .fb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-sm); }
 .fb-item { display: flex; gap: var(--sp-sm); align-items: flex-start; }
 .fb-item-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--r-md); background: var(--color-mint); color: var(--color-ink); flex-shrink: 0; }
@@ -982,9 +976,6 @@ body.quiz-active #bottom-nav { display: none !important; }
 /* ======================================================================
    Version 11.2 — Info grid, unit vocabulary line, Word Review, undo bar
    ====================================================================== */
-.about-grid { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); margin-bottom: var(--sp-sm); align-items: stretch; }
-@media (min-width: 760px) { .about-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.about-grid .about-card { margin-bottom: 0; }
 .info-footer { margin-top: var(--sp-md); padding: var(--sp-sm) var(--sp-xs) 0; text-align: center; color: var(--role-text-muted); }
 .info-copyright { margin: 0 0 4px; font-size: var(--font-size-sm); }
 .info-terms { margin: 0 auto; max-width: 46rem; font-size: var(--font-size-xs); line-height: 1.6; }
@@ -1059,7 +1050,6 @@ body.kbd-open .bottom-nav { display: none; }
 .bottom-nav .nav-btn.active { background: var(--role-accent-soft); color: var(--role-accent-text); }
 .bottom-nav .nav-btn:focus-visible { outline: 2px solid var(--role-focus); outline-offset: -2px; }
 .nav-btn .icon { transition: transform var(--t-fast) var(--ease-out); }
-.nav-btn.active .icon { transform: translateY(-1px) scale(1.1); }
 .nav-btn[hidden] { display: none; }
 .nav-more-menu {
   position: absolute; bottom: calc(100% + 10px); inset-inline-end: 0; z-index: 5;
@@ -1144,8 +1134,6 @@ body.kbd-open .bottom-nav { display: none; }
 .study-step .study-aside { border-style: solid; border-inline-start: 4px solid var(--color-review); background: var(--color-review-bg); }
 
 /* ---- 6. Settings ---- */
-.settings-grid { display: grid; gap: var(--sp-sm); grid-template-columns: minmax(0, 1fr); align-items: start; margin-bottom: var(--sp-sm); }
-@media (min-width: 900px) { .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .settings-card { padding: var(--sp-md); }
 .settings-card-title { margin-bottom: var(--sp-xs); }
 .settings-card-sub { margin: 0 0 var(--sp-sm); }
@@ -1185,3 +1173,116 @@ ol.md-list > li::before {
 .btn:focus-visible, .nav-card:focus-visible, .search-input:focus-visible, .segmented-btn:focus-visible, .readme-chip:focus-visible { outline: 2px solid var(--role-focus); outline-offset: 2px; }
 .btn:disabled, button:disabled, .btn[aria-disabled="true"] { background: var(--role-disabled-bg); color: var(--role-disabled-text); border-color: var(--role-border); cursor: not-allowed; opacity: 0.7; transform: none; }
 .search-box:focus-within { border-color: var(--role-accent-text); box-shadow: 0 0 0 3px var(--role-accent-soft); }
+
+
+/* ======================================================================
+   Version 11.3.1
+   1. Card layout: independent heights (masonry columns)   2. Floating controls (3)
+   3. Navigation indicator   4. Skeleton   5. Information tags   6. Study Method
+   ====================================================================== */
+
+/* ---- 1. Layout ----
+   WHY THERE WERE BLANK AREAS: Information/What's New, Settings, Feedback and the
+   README sections sat in CSS Grid. A grid row is as tall as its tallest card, so a
+   short card either stretched (align-items: stretch on .about-grid) or left a hole under
+   itself (align-items: start still keeps the row height). The fix is not smaller
+   margins: these groups are now column stacks (CSS multi-column). Each card keeps its
+   own natural height and the next card starts right under it. Reading order stays the
+   DOM order (down the first column, then the next). Unit cards on Home stay a grid
+   because they are meant to be equal-sized tiles. */
+.masonry { display: block; columns: 1; column-gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
+.masonry > * { display: block; width: 100%; break-inside: avoid; margin: 0 0 var(--sp-sm); }
+@media (min-width: 900px) { .masonry { columns: 2; } }
+.masonry.study-grid { margin-bottom: var(--sp-sm); }
+.readme-sections.masonry { margin-bottom: 0; }
+.about-grid.masonry, .settings-grid.masonry, .fb-grid.masonry { margin-bottom: 0; }
+.card-grid > .nav-card-unit { min-height: var(--unit-card-h); }
+
+/* ---- 2. Floating controls: keep-awake, theme, language (three separate circles) ---- */
+.float-btn.awake-toggle-btn.active { background: var(--role-accent); color: var(--role-on-accent); border-color: var(--role-accent); }
+.float-btn.awake-toggle-btn.active:hover { background: var(--role-accent-hover); }
+.float-controls .float-btn { position: relative; }
+@media (max-width: 1023px) { .app-header { padding-inline-end: 152px; } }
+@media (min-width: 1024px) {
+  :root { --bar-w: min(920px, calc(100% - 520px)); }
+  .float-controls { gap: 12px; }
+}
+
+/* ---- 3. Sliding navigation indicator ---- */
+.nav-indicator {
+  position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; border-radius: var(--r-pill);
+  background: var(--role-accent-soft); border: 1px solid var(--role-accent-soft-strong);
+  transform: translate(var(--ix, 0px), var(--iy, 0px));
+  transition: transform 320ms var(--ease-out), width 320ms var(--ease-out), height 320ms var(--ease-out), opacity var(--t-fast) ease;
+}
+.nav-indicator.no-anim { transition: none; }
+.bottom-nav .nav-btn { position: relative; z-index: 1; }
+.bottom-nav .nav-btn.active, .bottom-nav .nav-more.active { background: transparent; }
+.bottom-nav .nav-more-menu .nav-btn.active { background: var(--role-accent-soft); }
+.nav-btn.active .icon { transform: translateY(-1px) scale(1.1); }
+
+/* ---- 4. Skeleton: same sizes as the real screens ---- */
+.skeleton-wrap { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.sk-grid { margin: 0; }
+.sk-header { height: 48px; width: min(60%, 260px); }
+.sk-search { height: 48px; border-radius: var(--r-pill); }
+.sk-unit { height: var(--unit-card-h); border-radius: var(--r-lg); }
+.sk-readme-hero { height: 150px; border-radius: var(--r-lg); }
+.sk-readme-chips { height: 36px; border-radius: var(--r-pill); width: 80%; }
+.sk-readme-card { height: 180px; border-radius: var(--r-lg); margin-bottom: var(--sp-sm); }
+.sk-readme-card.tall { height: 280px; }
+
+/* ---- 5. Information: heading, version, six identity tags ---- */
+.about-head { align-items: center; }
+.version-badge { margin-inline-start: auto; }
+.feature-tags { gap: 8px; }
+.feature-tag {
+  --c: var(--pal-1);
+  background: color-mix(in srgb, var(--c) 15%, var(--role-surface));
+  color: color-mix(in srgb, var(--c) 62%, var(--role-text));
+  border: 1px solid color-mix(in srgb, var(--c) 34%, transparent);
+}
+.feature-tag .icon { color: var(--c); }
+.feature-tag[data-tag="offline"] { --c: var(--pal-1); }
+.feature-tag[data-tag="install"] { --c: var(--pal-4); }
+.feature-tag[data-tag="local"] { --c: var(--pal-6); }
+.feature-tag[data-tag="lang"] { --c: var(--pal-5); }
+.feature-tag[data-tag="progress"] { --c: var(--pal-2); }
+/* Light/Dark: the glyph is a small disc split into a light half and a dark half, so the tag
+   shows both modes at a glance; the label stays in normal text colors (always readable). */
+.feature-tag[data-tag="theme"] { background: var(--role-surface-alt); color: var(--role-text); border-color: var(--role-border); }
+.feature-tag[data-tag="theme"] .icon { display: none; }
+.feature-tag[data-tag="theme"]::before {
+  content: ''; width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%;
+  background: linear-gradient(90deg, #F3F5F8 0 50%, #1B2027 50% 100%);
+  box-shadow: 0 0 0 1.5px var(--role-text-secondary);
+}
+[dir="rtl"] .feature-tag[data-tag="theme"]::before { background: linear-gradient(270deg, #F3F5F8 0 50%, #1B2027 50% 100%); }
+
+/* ---- 6. Study Method: independent cards, no outer container ---- */
+.study-section { display: flex; flex-direction: column; gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
+.section-heading { display: flex; align-items: center; gap: var(--sp-sm); margin: var(--sp-xs) 0 0; font-size: var(--font-size-lg); }
+.study-lead-card { padding: var(--sp-md); background: var(--role-accent-soft); border-color: var(--role-accent-soft-strong); border-inline-start: 5px solid var(--role-accent); }
+.study-lead-card .study-lead { margin: 0; line-height: 1.9; font-size: var(--font-size-md); }
+.study-stage { padding: var(--sp-sm) var(--sp-md) var(--sp-md); }
+.study-stage .study-transition { display: inline-block; margin: 0 0 var(--sp-sm); padding: 5px 16px; border-radius: var(--r-pill); background: var(--role-accent); color: var(--role-on-accent); font-size: var(--font-size-md); line-height: 1.6; }
+.study-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; }
+.study-step { --c: var(--pal-1); position: relative; counter-increment: step; padding: var(--sp-sm) 0; padding-inline-start: 46px; line-height: 1.9; background: none; border: 0; border-radius: 0; border-bottom: 1px solid var(--role-border); }
+.study-step:last-child { border-bottom: 0; padding-bottom: 0; }
+.study-step:nth-child(6n+2) { --c: var(--pal-2); } .study-step:nth-child(6n+3) { --c: var(--pal-3); }
+.study-step:nth-child(6n+4) { --c: var(--pal-4); } .study-step:nth-child(6n+5) { --c: var(--pal-5); } .study-step:nth-child(6n+6) { --c: var(--pal-6); }
+.study-step::before {
+  content: counter(step); position: absolute; top: calc(var(--sp-sm) + 4px); inset-inline-start: 0;
+  width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--c) 18%, var(--role-surface)); color: color-mix(in srgb, var(--c) 62%, var(--role-text));
+  border: 1px solid color-mix(in srgb, var(--c) 38%, transparent); font-weight: var(--fw-bold); font-size: var(--font-size-sm); font-family: var(--font-en, var(--font-main));
+}
+.study-step:last-child::before { top: 4px; }
+.study-step .study-example, .study-step .study-aside { margin: var(--sp-xs) 0 0; padding: var(--sp-xs) var(--sp-sm); border-radius: var(--r-md); line-height: 1.8; background: var(--role-surface-alt); border: 1px dashed var(--role-border); }
+.study-step .study-aside { border-style: solid; border-inline-start: 4px solid var(--color-review); background: var(--color-review-bg); }
+.study-note-card { padding: 0; background: none; border: 0; box-shadow: none; }
+.study-note-card .hl-note { margin: 0; padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-lg); background: var(--role-surface-alt); border: 1px solid var(--role-border); line-height: 1.9; font-size: var(--font-size-sm); }
+
+/* Review: one card per unit, independent heights (same column-stack layout as the other pages). */
+.review-list.masonry { display: block; margin-bottom: var(--sp-sm); }
+.review-list.masonry > .review-group { margin: 0 0 var(--sp-sm); }

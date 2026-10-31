@@ -91,7 +91,8 @@
 }
 
 /* ---------- Progress bar fill ---------- */
-.progress-fill { transition: width var(--t-med) var(--ease-out); }
+.progress-fill { transition: width 700ms var(--ease-out); }
+.mini-progress-fill { transition: width 500ms var(--ease-out); }
 .mini-progress-fill { transition: width var(--t-med) var(--ease-out); }
 
 /* ---------- Theme switch: smooth color transition across the whole app,
@@ -136,15 +137,19 @@ body, .card, .section-card, .nav-card, .group, .result-row,
    (<html data-motion="off">) or the device asks for reduced motion.
    ====================================================================== */
 
-/* Cards come in one after another (first eight only). */
-.card-grid > *, .review-group, .settings-grid > *, .about-grid > *, .fb-grid > *, .readme-sections > *, .study-step, .pos-grid > * {
+/* Entrance: ui.js puts .is-entering on #screen-container for ~0.9 s when a screen is
+   really (re)drawn — never on partial updates (a Review row, a progress bar), so nothing
+   replays by accident. Cards come in one after another (first eight only). */
+#screen-container.is-entering > .app-header,
+#screen-container.is-entering .card-grid > *:not(.sk), #screen-container.is-entering .masonry > *:not(.sk), #screen-container.is-entering .review-group,
+#screen-container.is-entering .study-step, #screen-container.is-entering .pos-grid > *, #screen-container.is-entering .study-lead-card, #screen-container.is-entering .study-note-card {
   animation: fade-in-up var(--t-med) var(--ease-out) backwards;
   animation-delay: calc(var(--stagger, 0) * 45ms);
 }
-.card-grid > :nth-child(2), .review-group:nth-child(2), .settings-grid > :nth-child(2), .about-grid > :nth-child(2), .fb-grid > :nth-child(2), .readme-sections > :nth-child(2), .study-step:nth-child(2), .pos-grid > :nth-child(2) { --stagger: 1; }
-.card-grid > :nth-child(3), .review-group:nth-child(3), .settings-grid > :nth-child(3), .readme-sections > :nth-child(3), .study-step:nth-child(3), .pos-grid > :nth-child(3) { --stagger: 2; }
-.card-grid > :nth-child(4), .settings-grid > :nth-child(4), .readme-sections > :nth-child(4), .study-step:nth-child(4), .pos-grid > :nth-child(4) { --stagger: 3; }
-.card-grid > :nth-child(n+5), .settings-grid > :nth-child(n+5), .readme-sections > :nth-child(n+5), .study-step:nth-child(n+5), .pos-grid > :nth-child(n+5) { --stagger: 4; }
+.card-grid > :nth-child(2), .masonry > :nth-child(2), .review-group:nth-child(2), .study-step:nth-child(2), .pos-grid > :nth-child(2) { --stagger: 1; }
+.card-grid > :nth-child(3), .masonry > :nth-child(3), .review-group:nth-child(3), .study-step:nth-child(3), .pos-grid > :nth-child(3) { --stagger: 2; }
+.card-grid > :nth-child(4), .masonry > :nth-child(4), .study-step:nth-child(4), .pos-grid > :nth-child(4) { --stagger: 3; }
+.card-grid > :nth-child(n+5), .masonry > :nth-child(n+5), .study-step:nth-child(n+5), .pos-grid > :nth-child(n+5) { --stagger: 4; }
 
 /* Card hover / press (only where a real pointer can hover). */
 .nav-card, .review-group, .about-card, .settings-card { transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) ease, border-color var(--t-fast) ease, background-color var(--t-fast) ease; }
