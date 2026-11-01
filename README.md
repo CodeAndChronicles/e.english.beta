@@ -2,7 +2,7 @@
 
 **E.English** is a free vocabulary study website for learning English. It works offline after the first visit and keeps all your progress on your own device. There are no accounts and no sign-up.
 
-> **Version 11.3.1.** Open a lesson, mark the words you have learned, take a quiz, then come back to the words you missed.
+> **Version 11.3.2.** Features marked 🧪 are **Beta**: new, or dependent on your device or browser, and still open to change. Open a lesson, mark the words you have learned, take a quiz, then come back to the words you missed.
 
 ## What you can do
 
@@ -50,22 +50,32 @@ On the Statistics page the Review list is **grouped by unit**. Each word is show
 
 ## Statistics and Quiz History
 
-- **Statistics** shows overall progress, progress for each content type, and the Review list.
-- **Quiz History** keeps your last 40 quizzes, newest first. Open one to see the same detailed result screen. Each entry is a snapshot, so an old result stays the same even if lessons change later.
+- **Statistics** shows overall progress and progress for each content type side by side on wide screens, then the Review list. The numbers are the same as before; only the layout changed.
+- **Quiz History** keeps your last 40 quizzes, newest first, shown as cards grouped by day with a percentage bar. Open one to see the same detailed result screen. Each entry is a snapshot, so an old result stays the same even if lessons change later.
 
 ## Search
 
-Type in the search box on Home to find any word or meaning. Pick a result to open it in its lesson.
+Type in the search box on Home to find any word or meaning. Pick a result to open it in its lesson. Press **Esc** or the **×** button to clear the box. Results always match what is in the box, and clearing it empties the list at once.
+
+## Keyboard shortcuts 🧪
+
+Shortcuts work only when you are not typing in a field, never while a quiz is running, and never with Ctrl, Alt or Cmd held (those stay with your browser and system).
+
+| Key | Action |
+| --- | --- |
+| `/` | Open search |
+| `1` – `7` | Go to Home, Statistics, History, Settings, Info, Feedback, README |
+| `Esc` | Clear the search, or close the More menu |
 
 ## Settings
 
 - **Language:** English or Arabic. The whole interface changes, including the layout direction. Lesson content (words, meanings, the Arabic study text) is not translated.
 - **Theme mode:** Light, Dark or System. Three round buttons sit together: **Keep screen awake**, **theme** and **language**. They are at the top of the screen on phones and tablets, and beside the navigation bar on desktop, and they are hidden during a quiz. The Keep screen awake button and the switch in Settings always show the same state.
 - **Font style:** **Auto** (the recommended default: bold headings, regular text), **Regular** or **Bold**.
-- **Accent color:** Default (neutral graphite), Burgundy, Lavender, Sky Blue, Lime, Orange or Teal, shown as named options, in both Light and Dark. The chosen palette colors the whole app (cards, tags, numbered steps, progress), while success, warning, error and the Review flag keep their own colors. Success, warning, error and the Review flag keep their own colors. If an earlier version saved a palette that is no longer offered, it keeps working until you choose a new one.
+- **Colors:** one color system covers the whole app. **Accent color:** Default (neutral graphite), Burgundy, Lavender, Sky Blue, Lime, Orange or Teal, shown as named options, in both Light and Dark. The chosen palette colors the whole app (cards, tags, numbered steps, progress), while success, warning, error and the Review flag keep their own colors. Success, warning, error and the Review flag keep their own colors. If an earlier version saved a palette that is no longer offered, it keeps working until you choose a new one.
 - **Animations:** switch movement on or off, with a small preview. If your device asks for reduced motion, animations stay off.
 - **Local storage:** shows how much browser storage the site uses. It is a real measurement from your browser when your browser provides it; otherwise it says the value is unavailable. The bar uses a 1 GB reference scale only for scale, and browsers do not all guarantee 1 GB.
-- **Keep screen awake:** stops the screen from turning off while you study, where your browser supports it.
+- **Keep screen awake** 🧪: stops the screen from turning off while you study, where your browser supports it. If your browser cannot do this, the switch turns back off and tells you.
 - **Data management** (the last section of the page, always visible): **Export Data**, **Import Data** and **Delete All Data**.
 
 ## Info and Feedback
@@ -75,7 +85,7 @@ Type in the search box on Home to find any word or meaning. Pick a result to ope
 
 ## Working offline and updates
 
-After your first visit with internet, the app and all lessons are saved in your browser, so lessons, search, quizzes, Statistics, Review and Settings work without a connection. When a new version is available, the app refreshes its own files once the new ones are ready, and never in the middle of a quiz. Updates replace app files only; your learning data is never touched.
+After your first visit with internet, the app, all lessons and both Read Me files are saved in your browser, so lessons, search, quizzes, Statistics, Review, Settings and this Read Me work without a connection. The app is saved only when every essential file was stored; if something could not be saved, the saving is retried on a later visit instead of leaving a half-saved copy. Installing it as an app 🧪 uses the same saved copy to start offline. When a new version is available, the app refreshes its own files once the new ones are ready, and never in the middle of a quiz. Updates replace app files only; your learning data is never touched.
 
 ## Your data and privacy
 

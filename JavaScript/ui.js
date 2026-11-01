@@ -42,6 +42,15 @@
     fill.style.width = '0%';
     requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = widthStr; }); });
   }
+  const TEXT_TYPES = /^(text|search|email|url|tel|password|number)$/;
+  function isTextEntry(t) {
+    if (!t || !t.tagName) return false;
+    if (t.tagName === 'TEXTAREA' || t.isContentEditable) return true;
+    return t.tagName === 'INPUT' && TEXT_TYPES.test(t.type || 'text');
+  }
+  function touchNarrow() {
+    return !!(global.matchMedia && global.matchMedia('(pointer: coarse)').matches) && global.innerWidth < 1024;
+  }
   function tmin(s) { return String(s).replace(/\bmin\b/, T('min')); }   // "14–20 min" → Arabic unit
   // Pure formatting / labels only (no logic, no state) come from the quiz
   // engine so a score, a percentage or a clock is written the same everywhere.
@@ -129,18 +138,27 @@
       else if (e.key === 'ArrowUp') { items[(i - 1 + items.length) % items.length].focus(); e.preventDefault(); }
     });
     document.addEventListener('click', function (e) { if (!el.nav.contains(e.target)) closeMore(); });
-    global.addEventListener('resize', layoutNav);
+    let navRaf = 0;                               // at most one re-measure per frame while resizing
+    global.addEventListener('resize', function () {
+      if (navRaf) return;
+      navRaf = requestAnimationFrame(function () { navRaf = 0; layoutNav(); });
+    });
   }
+  // Re-decides which items fit. The bar's width does not depend on its children, so the
+  // answer is computed first WITHOUT touching the DOM, and the buttons are moved only when
+  // the number of visible items actually changes (not on every resize event).
+  let navFit = -1;
   function layoutNav() {
     if (!el.nav || !moreBtn || el.nav.hidden) return;
-    closeMore();
-    navButtons.forEach(function (b) { el.nav.insertBefore(b, moreBtn); });   // all back in order, then measure
-    moreBtn.hidden = true;
     const cs = global.getComputedStyle(el.nav);
     const avail = el.nav.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const minW = global.innerWidth >= 1024 ? 84 : 56;             // smallest comfortable item
-    if (navButtons.length * minW <= avail) { syncMoreActive(); return; }
-    const fit = Math.max(1, Math.floor(avail / minW) - 1);          // leave room for "More"
+    const fit = navButtons.length * minW <= avail ? navButtons.length : Math.max(1, Math.floor(avail / minW) - 1);   // room kept for "More"
+    if (fit === navFit) { syncMoreActive(); return; }
+    navFit = fit;
+    closeMore();
+    navButtons.forEach(function (b) { el.nav.insertBefore(b, moreBtn); });   // all back in order
+    if (fit >= navButtons.length) { moreBtn.hidden = true; syncMoreActive(); return; }
     navButtons.slice(fit).forEach(function (b) { moreMenu.appendChild(b); });
     moreBtn.hidden = false;
     syncMoreActive();
@@ -211,6 +229,40 @@
   }
 
   /* Quick "keep screen awake" button in the floating group: same state and same routine as Settings. */
+  /* Keyboard shortcuts — few and plain, never while typing:
+       /  open search        1–7  go to Home, Statistics, History, Settings, Info, Feedback, README
+       Esc  clear the search / close the More menu
+     Ignored with Ctrl, Alt or Meta held (browser/system shortcuts stay theirs), inside any
+     text field, select or editable area, and during a quiz. Registered once. */
+  const NAV_KEYS = ['home', 'statistics', 'history', 'settings', 'info', 'feedback', 'readme'];
+  let shortcutsOn = false;
+  function focusSearch() {
+    if (route.screen !== 'home') renderHome();
+    const input = document.querySelector('.search-input');
+    if (input) { input.focus(); input.select(); }
+  }
+  function setupShortcuts() {
+    if (shortcutsOn) return;
+    shortcutsOn = true;
+    document.addEventListener('keydown', function (e) {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const t = e.target;
+      if (isTextEntry(t) || (t && t.tagName === 'SELECT')) {
+        if (e.key === 'Escape' && t.classList && t.classList.contains('search-input')) { clearSearch(t); t.blur(); }
+        return;
+      }
+      if (document.body.classList.contains('quiz-active') || route.screen === 'quiz' || route.screen === 'skeleton' || route.screen === 'load-blocked') return;
+      if (e.key === 'Escape') { closeMore(true); return; }
+      if (e.shiftKey) return;
+      if (e.key === '/' || e.code === 'Slash') { e.preventDefault(); focusSearch(); return; }
+      const m = /^Digit([1-7])$/.exec(e.code || '');
+      if (m) {
+        const btn = el.nav && el.nav.querySelector('[data-nav="' + NAV_KEYS[Number(m[1]) - 1] + '"]');
+        if (btn) { e.preventDefault(); btn.click(); }
+      }
+    });
+  }
+
   function setupAwakeButton() {
     el.awakeBtn = document.getElementById('awake-toggle-btn');
     if (!el.awakeBtn) return;
@@ -259,37 +311,12 @@
     el.themeBtn.setAttribute('title', T('Theme') + ': ' + T(THEME_META[pref].label));
     el.themeBtn.setAttribute('aria-label', T('Theme') + ': ' + T(THEME_META[pref].label) + '. ' + T('Switch to') + ' ' + T(THEME_META[next].label) + '.');
   }
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    syncThemeButton();
-    syncMetaThemeColor();
-  }
+  // Theme + palette are applied by ColorSystem.js (one place). Here we only keep the
+  // theme button's icon/label in step with the effective theme.
   // Font style (O2 / Regular / Bold) — one <html data-font> attribute; root.css turns
   // it into the two weight roles every screen already uses.
   function applyFontMode(mode) {
     document.documentElement.setAttribute('data-font', mode || 'o2');
-  }
-
-  // Accent palette — independent from light/dark; see CSS/root.css. The
-  // default look (no accent picked) has NO data-color attribute at all, so
-  // nothing can leak a forced accent into it.
-  function applyThemeColor(color) {
-    if (!color || color === 'default') document.documentElement.removeAttribute('data-color');
-    else document.documentElement.setAttribute('data-color', color);
-    syncMetaThemeColor();
-  }
-  // Browser/mobile toolbar color follows the active theme + accent: the
-  // page background in the default look and in dark mode, the palette's
-  // accent fill in light mode when an accent has been picked.
-  function syncMetaThemeColor() {
-    const meta = document.getElementById('meta-theme-color');
-    if (!meta) return;
-    const root = document.documentElement;
-    const cs = getComputedStyle(root);
-    const dark = root.getAttribute('data-theme') === 'dark';
-    const useAccent = !dark && root.hasAttribute('data-color');
-    const val = (useAccent ? cs.getPropertyValue('--color-primary') : cs.getPropertyValue('--color-bg')).trim();
-    if (val) meta.setAttribute('content', val);
   }
 
   /* ---------------- Part of speech ----------------
@@ -420,9 +447,15 @@
 
     const searchBox = h('div', { class: 'search-box' });
     searchBox.appendChild(icon('search', 'search-icon'));
-    const searchInput = h('input', { type: 'text', class: 'search-input', dir: 'auto', placeholder: T('Search for a word...'), 'aria-label': T('Search words') });
-    searchInput.addEventListener('input', function () { UX.search(searchInput.value); });
+    const searchInput = h('input', { type: 'text', class: 'search-input', dir: 'auto', placeholder: T('Search for a word...'), 'aria-label': T('Search words'), autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', enterkeyhint: 'search', inputmode: 'search' });
+    const clearBtn = h('button', { type: 'button', class: 'search-clear', hidden: 'hidden', title: T('Clear search'), 'aria-label': T('Clear search'), onclick: function () { clearSearch(searchInput); searchInput.focus(); } }, [icon('x')]);
+    searchInput.addEventListener('input', function () {
+      clearBtn.hidden = !searchInput.value;
+      if (!searchInput.value.trim()) renderSearchResults({ results: [] });   // clearing is instant, no debounce wait
+      UX.search(searchInput.value);
+    });
     searchBox.appendChild(searchInput);
+    searchBox.appendChild(clearBtn);
     el.screen.appendChild(searchBox);
     el.screen.appendChild(h('div', { class: 'search-results', id: 'search-results' }));
 
@@ -460,9 +493,21 @@
     renderSearchResults({ results: [] });
   }
 
+  function clearSearch(input) {
+    input.value = '';
+    const b = input.parentNode && input.parentNode.querySelector('.search-clear');
+    if (b) b.hidden = true;
+    renderSearchResults({ results: [] });
+    UX.search('');
+  }
+
   function renderSearchResults(payload) {
     const container = document.getElementById('search-results');
     if (!container) return;
+    // A late answer for text that is no longer in the box (the person kept typing, cleared it,
+    // or left and came back to Home) must not paint over the current state.
+    const box = document.querySelector('.search-input');
+    if (payload && typeof payload.query === 'string' && box && box.value !== payload.query) return;
     clear(container);
     const results = (payload && payload.results) || [];
     if (!results.length) {
@@ -1008,16 +1053,16 @@
     const overallText = h('span', { class: 'stats-hero-count', text: T('{k} of {n} words learned', { k: stats.overall.known, n: stats.overall.total }) });
     const overallFill = h('div', { class: 'progress-fill' });
     growFill(overallFill, pct(stats.overall.progress));
-    el.screen.appendChild(h('section', { class: 'card stats-hero tone-blue', 'aria-label': T('Overall progress') }, [
+    const heroEl = h('section', { class: 'card stats-hero tone-blue', 'aria-label': T('Overall progress') }, [
       h('div', { class: 'stats-hero-label', text: T('Overall progress') }),
       h('div', { class: 'stats-hero-main' }, [overallPct, overallText]),
       h('div', { class: 'progress-bar progress-lg', role: 'progressbar', 'aria-label': T('Overall progress') }, [overallFill])
-    ]));
+    ]);
 
     // 2) Progress per content type, grouped in ONE card (rows, not four cards).
     // Order follows SECTION_META; each type is counted on its own, so one
     // never dilutes another.
-    el.screen.appendChild(h('h2', { class: 'stats-section-title', text: T('By content type') }));
+    const typesTitle = h('h2', { class: 'stats-section-title', text: T('By content type') });
     const typeRefs = {};
     const typesList = h('div', { class: 'card stats-types' });
     Object.keys(SECTION_META).forEach(function (type) {
@@ -1035,7 +1080,7 @@
       ]));
       typeRefs[type] = { fill: fill, pct: pctEl, count: count };
     });
-    el.screen.appendChild(typesList);
+    el.screen.appendChild(h('div', { class: 'stats-dashboard' }, [heroEl, h('div', { class: 'stats-side' }, [typesTitle, typesList])]));
 
     const reviewHead = h('h2', { class: 'stats-section-title stats-review-title' }, [
       icon('flag'), h('span', { text: T('Words to review (') + stats.reviewWords.length + ')' })
@@ -1318,6 +1363,9 @@
     const d = new Date(ts);
     return d.toLocaleDateString(global.I18n.locale(), { year: 'numeric', month: 'short', day: 'numeric' }) + ' \u00B7 ' + d.toLocaleTimeString(global.I18n.locale(), { hour: '2-digit', minute: '2-digit' });
   }
+  function timeLabel(ts) { return new Date(ts).toLocaleTimeString(global.I18n.locale(), { hour: '2-digit', minute: '2-digit' }); }
+  function dayKey(ts) { const d = new Date(ts); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
+  function dayLabel(ts) { return new Date(ts).toLocaleDateString(global.I18n.locale(), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
   function rangeLabel(record) {
     return record.estimatedRange ? tmin(QE.formatRange(record.estimatedRange.min, record.estimatedRange.max)) : '\u2014';
   }
@@ -1485,11 +1533,12 @@
           h('span', { class: 'qh-score-max', text: ' / ' + QE.formatScore(rec.maxScore) })
         ])
       ]),
+      h('div', { class: 'qh-bar', 'aria-hidden': 'true' }, [h('div', { class: 'qh-bar-fill', style: 'width:' + Math.max(0, Math.min(100, Number(rec.percentage) || 0)) + '%' })]),
       h('div', { class: 'qh-meta' }, [
         h('span', { class: 'qh-pct', text: QE.formatPercent(rec.percentage) }),
         h('span', { class: 'qh-dot', text: '\u00B7', 'aria-hidden': 'true' }),
         h('span', { class: 'qh-duration' }, [icon('timer'), h('span', { text: rec.durationSeconds != null ? QE.formatClock(rec.durationSeconds) : '\u2014' })]),
-        h('span', { class: 'qh-date', text: dateLabel(rec.ts) })
+        h('span', { class: 'qh-date', text: timeLabel(rec.ts) })
       ]),
       counts,
       icon('chevron-right', 'qh-chevron')
@@ -1512,9 +1561,22 @@
         h('p', { class: 'empty-note', text: T('No quizzes yet. Finish a quiz and it will appear here.') })
       ]));
     } else {
-      const list = h('div', { class: 'quiz-history-list' });
-      records.forEach(function (rec) { list.appendChild(renderHistoryItem(rec)); });
-      el.screen.appendChild(list);
+      // Newest first (unchanged); only the PRESENTATION groups consecutive quizzes by day.
+      const wrap = h('div', { class: 'qh-groups' });
+      let curKey = null, grid = null;
+      records.forEach(function (rec) {
+        const key = dayKey(rec.ts);
+        if (key !== curKey) {
+          curKey = key;
+          const sec = h('section', { class: 'qh-group', 'aria-label': dayLabel(rec.ts) });
+          sec.appendChild(h('h2', { class: 'qh-day', text: dayLabel(rec.ts) }));
+          grid = h('div', { class: 'quiz-history-list' });
+          sec.appendChild(grid);
+          wrap.appendChild(sec);
+        }
+        grid.appendChild(renderHistoryItem(rec));
+      });
+      el.screen.appendChild(wrap);
     }
     showNav('history');
   }
@@ -1577,8 +1639,8 @@
     { k: 'p', x: 'لو افتكرتها و نطقت صح تبقى تمام' },
     { k: 't', x: 'طب لو مش فاكرها؟..' },
     { k: 'p', x: '{y|حطها فـ جملة عربي و انجليزي} برضو فـ الكراسة و اعمل عليها {p|Highlight} برضو بس لون مختلف و ابدأ {y|قسمها لـ مقاطع} و اقرأها علطول' },
-    { k: 'p', x: 'و بس كدة يعني دي افضل طريقة ممكن تحفظ بيها الكلمات' },
-    { k: 'p', x: 'و طبعا كل شخص بيختلف عن التاني ف الطريقة فـ م مجبر تحفظ بنفس الطريقة لو عندك طريقة بتريحك فـ الحفظ اعملها المهم ان احنا رتبنا ليك الكلمات و سهلناها عليك بشكل كبير جدا عن الأول..' }
+    { k: 'p', x: 'و بس كدة يعني دي افضل طريقة ممكن تحفظ بيها الكلمات', n: 1 },
+    { k: 'p', x: 'و طبعا كل شخص بيختلف عن التاني ف الطريقة فـ م مجبر تحفظ بنفس الطريقة لو عندك طريقة بتريحك فـ الحفظ اعملها المهم ان احنا رتبنا ليك الكلمات و سهلناها عليك بشكل كبير جدا عن الأول..', n: 1 }
   ];
   // The owner's note under the legend — his own words, kept exactly.
   const HL_NOTE = 'لا تستخدم نفس أو ألوانًا متشابهة بشكل متكرر لمفاهيم مختلفة، لأن ذلك قد يجعل العقل يخلط بينها. مثال: إذا كنت تستخدم القلم الأحمر للكلمات الصعبة، فمن الأفضل ألا تستخدم Highlighter أحمر لنفس الكلمات. استخدم مثلًا الأصفر أو الأخضر أو البنفسجي بدلًا منه.';
@@ -1603,40 +1665,48 @@
     return h('h2', { class: 'info-card-title' }, [h('span', { class: 'card-title-icon', 'aria-hidden': 'true' }, [icon(iconName)]), h('span', { text: text })]);
   }
 
-  // Study Method: the text is unchanged — only its presentation. No outer container:
-  // a section heading, the lead as its own callout card, then each stage as an
-  // independent card (they flow into columns when there is room). Steps are rows with a
-  // designed, palette-coordinated number badge (CSS counter) — not a default list.
+  // Study Method: the text is unchanged — only how it is shown. The first stage is a real
+  // sequence (do 1, then 2, then 3 …) so it keeps numbered steps. The other stages are tips and
+  // alternatives for particular situations (each one starts with its own question), so they are
+  // NOT numbered — a dot marker instead — and the two closing remarks form a closing note.
   function renderStudyMethod() {
-    const stages = [];
-    let stage = null, steps = null, last = null, lead = null;
-    function openStage(title) {
-      stage = h('section', { class: 'card study-stage' });
-      if (title) stage.appendChild(appendRich(h('h3', { class: 'study-transition', dir: 'rtl', lang: 'ar' }), title));
-      steps = h('ol', { class: 'study-steps', dir: 'rtl', lang: 'ar' });
-      stage.appendChild(steps);
-      stages.push(stage);
-      last = null;
-    }
+    const stages = [];                       // { title, items: [li], closing: bool }
+    let stage = null, last = null, lead = null;
+    const closing = [];
+    function open(title) { stage = { title: title, items: [] }; stages.push(stage); last = null; }
     STUDY_METHOD.forEach(function (b) {
       if (b.k === 'lead') { lead = appendRich(h('p', { class: 'study-lead' }), b.x); return; }
-      if (b.k === 't') { openStage(b.x); return; }
-      if (!stage) openStage(null);
-      if (b.k === 'p') {
-        last = h('li', { class: 'study-step' }, [appendRich(h('p', { class: 'study-p' }), b.x)]);
-        steps.appendChild(last);
-        return;
-      }
+      if (b.k === 't') { open(b.x); return; }
+      if (!stage) open(null);
+      if (b.n) { closing.push(appendRich(h('p', { class: 'study-closing-p' }), b.x)); return; }
+      if (b.k === 'p') { last = h('li', {}, [appendRich(h('p', { class: 'study-p' }), b.x)]); stage.items.push(last); return; }
       const attrs = { class: b.k === 'aside' ? 'study-aside' : (b.k === 'exen' ? 'study-example study-example-en' : 'study-example') };
       if (b.k === 'exen') { attrs.dir = 'ltr'; attrs.lang = 'en'; }
       const node = appendRich(h('p', attrs), b.x);
-      if (last) last.appendChild(node); else steps.appendChild(h('li', { class: 'study-step' }, [node]));
+      if (last) last.appendChild(node); else { last = h('li', {}, [node]); stage.items.push(last); }
     });
+    function card(st, numbered) {
+      const c = h('section', { class: 'card study-stage ' + (numbered ? 'is-steps' : 'is-tips') });
+      if (st.title) c.appendChild(appendRich(h('h3', { class: 'study-transition', dir: 'rtl', lang: 'ar' }), st.title));
+      const list = h(numbered ? 'ol' : 'ul', { class: numbered ? 'study-steps' : 'study-tips', dir: 'rtl', lang: 'ar' });
+      st.items.forEach(function (li) { li.className = numbered ? 'study-step' : 'study-tip'; list.appendChild(li); });
+      c.appendChild(list);
+      return c;
+    }
+    function sub(text) { return h('h3', { class: 'study-subheading' }, [h('span', { text: text })]); }
     const kids = [h('h2', { class: 'section-heading' }, [
       h('span', { class: 'card-title-icon', 'aria-hidden': 'true' }, [icon('notebook-text')]), h('span', { text: T('Study method') })
     ])];
     if (lead) kids.push(h('div', { class: 'card study-lead-card', dir: 'rtl', lang: 'ar' }, [lead]));
-    kids.push(h('div', { class: 'study-grid masonry' }, stages));
+    if (stages.length) {
+      kids.push(sub(T('Steps, in order')));
+      kids.push(h('div', { class: 'study-grid masonry' }, [card(stages[0], true)]));
+    }
+    if (stages.length > 1) {
+      kids.push(sub(T('Tips and alternatives (not steps)')));
+      kids.push(h('div', { class: 'study-grid masonry' }, stages.slice(1).map(function (st) { return card(st, false); })));
+    }
+    if (closing.length) kids.push(h('div', { class: 'card study-closing', dir: 'rtl', lang: 'ar' }, closing));
     // The educational note (the highlighter-colour legend/selector was removed).
     kids.push(h('div', { class: 'card study-note-card', dir: 'rtl', lang: 'ar' }, [h('p', { class: 'hl-note', text: HL_NOTE })]));
     return h('section', { class: 'study-section', 'aria-label': T('Study method') }, kids);
@@ -1671,7 +1741,10 @@
     page.appendChild(renderStudyMethod());   // Study Method
     page.appendChild(card);                  // Parts of Speech
 
+    // Credits: names exactly as the project credits them; no extra authors, no license text
+    // (a license needs the owner's decision — see the LICENSE note in the release report).
     page.appendChild(h('footer', { class: 'info-footer' }, [
+      h('p', { class: 'info-credit' }, [h('strong', { text: T('Design, development and learning content') }), h('span', { text: ' \u2014 Mohamed & Anas' })]),
       h('p', { class: 'info-copyright', text: T('\u00A9 2026 Mohamed & Anas. All rights reserved.') }),
       h('p', { class: 'info-terms', text: T('The original code, design and content of E.English belong to their credited authors. Copying, republishing, reusing them, or presenting them as your own work requires the authors\u2019 permission, to the extent permitted by applicable law.') })
     ]));
@@ -1697,13 +1770,13 @@
     setupNavIndicator();
     setupScreenMotion();
     setupAwakeButton();
+    setupShortcuts();
 
     // Theme: applied at boot from the persisted preference (light / dark /
     // system), then driven by the 'theme-changed' event. UX emits that event
     // on every preference change AND, while the preference is 'system',
     // whenever the OS/browser theme flips — no reload needed.
-    applyTheme(UX.getTheme());
-    applyThemeColor(UX.getThemeColor());
+    syncThemeButton();                        // colors were already applied by ColorSystem.js
     document.documentElement.setAttribute('lang', UX.getLanguage());
     document.documentElement.setAttribute('dir', UX.getLanguage() === 'ar' ? 'rtl' : 'ltr');
     if (el.themeBtn) {
@@ -1718,24 +1791,17 @@
     function applyMotion() { document.documentElement.setAttribute('data-motion', UX.getAnimationsEnabled() ? 'on' : 'off'); }
     applyMotion();
     UX.on('animations-changed', applyMotion);
-    // While a text field has focus the on-screen keyboard takes the bottom of the
-    // screen: hide the floating bars so they never sit on top of what is typed.
+    // The on-screen keyboard takes the bottom of the screen only on touch devices. So the
+    // floating bar is hidden ONLY when a TEXT field has focus AND the device is touch AND the
+    // screen is narrow. (It used to react to every <input>: focusing the palette's radio
+    // inputs, or the search box on a desktop, hid the bar until the next click.)
     document.addEventListener('focusin', function (e) {
-      if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName) && e.target.type !== 'checkbox' && e.target.type !== 'file') document.body.classList.add('kbd-open');
+      if (isTextEntry(e.target) && touchNarrow()) document.body.classList.add('kbd-open');
     });
-    document.addEventListener('focusout', function () { document.body.classList.remove('kbd-open'); });
-    UX.on('theme-preference-changed', syncThemeButton);
-    // Colors fade briefly when the theme or palette changes (only while Animations are on).
-    let fadeTimer = null;
-    function pulseThemeFade() {
-      const reduce = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!UX.getAnimationsEnabled() || reduce) return;
-      document.documentElement.classList.add('theme-fade');
-      clearTimeout(fadeTimer);
-      fadeTimer = setTimeout(function () { document.documentElement.classList.remove('theme-fade'); }, 340);
-    }
-    UX.on('theme-changed', function (t) { pulseThemeFade(); applyTheme(t); });
-    UX.on('theme-color-changed', function (c) { pulseThemeFade(); applyThemeColor(c); });
+    document.addEventListener('focusout', function (e) {
+      if (!isTextEntry(e.relatedTarget)) document.body.classList.remove('kbd-open');
+    });
+    UX.on('theme-changed', syncThemeButton);   // one listener (the preference event used to add a second one)
     applyFontMode(UX.getFontMode());
     UX.on('font-mode-changed', applyFontMode);
 

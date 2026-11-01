@@ -167,10 +167,10 @@
     return lab;
   }
   // A labelled option row: title + hint on the start side, the control on the end side.
-  function switchRow(title, sub, control) {
+  function switchRow(title, sub, control, beta) {
     return h('div', { class: 'switch-row' }, [
       h('div', { class: 'settings-row-text' }, [
-        h('div', { class: 'settings-row-title', text: T(title) }),
+        h('div', { class: 'settings-row-title' }, [h('span', { text: T(title) }), beta && global.UI && global.UI.betaMark ? global.UI.betaMark() : null]),
         sub ? h('div', { class: 'settings-row-sub', text: T(sub) }) : null
       ]),
       control
@@ -292,7 +292,7 @@
     // the quick button; this switch just mirrors 'keep-awake-changed'.
     const awakeSwitch = toggleSwitch(UX.getKeepAwake(), function (checked) { applyKeepAwake(checked); }, 'Keep screen awake');
     awakeSwitch.classList.add('awake-switch');
-    studyCard.appendChild(switchRow('Keep screen awake', 'Stops the screen from turning off while you study', awakeSwitch));
+    studyCard.appendChild(switchRow('Keep screen awake', 'Stops the screen from turning off while you study', awakeSwitch, true));   // Beta: depends on the device/browser
     /* ---- Animations: on/off + a tiny preview. Off (or the device's reduced-motion
        setting) means no movement anywhere; the preview just stays still. ---- */
     const motionActive = function () { return UX.getAnimationsEnabled() && !(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches); };
@@ -335,7 +335,10 @@
       }).catch(function () { storageBar.hidden = true; storageNote.hidden = true; storageText.textContent = T('Storage usage is unavailable in this browser.'); });
     })();
 
-    screen.appendChild(h('div', { class: 'settings-grid masonry' }, [appearanceCard, motionCard, storageCard]));
+    // Data management is the LAST card, placed in the same column layout (compact), so it no
+    // longer spans the whole page on a wide screen.
+    const settingsGrid = h('div', { class: 'settings-grid masonry' }, [appearanceCard, motionCard, storageCard, dataCard]);
+    screen.appendChild(settingsGrid);
 
     /* ---- Data management: always visible, last section on the page ---- */
     dataCard.appendChild(h('p', { class: 'settings-row-sub settings-card-sub', text: T('Back up your progress, restore it, or erase it from this device.') }));
@@ -388,7 +391,6 @@
         }
       }
     }, [icon('trash-2'), h('span', { text: T('Delete All Data') })]));
-    screen.appendChild(dataCard);
 
   }
 

@@ -23,6 +23,7 @@
   <meta name="twitter:image" content="Ui/Logo.png" />
 
   <link rel="stylesheet" href="CSS/root.css" />
+  <link rel="stylesheet" href="CSS/ColorSystem.css" />
   <link rel="stylesheet" href="CSS/responsive.css" />
   <link rel="stylesheet" href="CSS/animations.css" />
   <link rel="stylesheet" href="CSS/settings.css" />
@@ -72,7 +73,7 @@
   <script>
     (function () {
       var q = '?js=' + (window.EE_JS_VERSION || '0');
-      var files = ['icons', 'i18n', 'quiz-engine', 'ux', 'ui', 'settings', 'readme', 'pages'];   // order matters: i18n before ux (ux applies the saved language), quiz-engine before ux, ux before ui
+      var files = ['icons', 'i18n', 'quiz-engine', 'ux', 'ColorSystem', 'ui', 'settings', 'readme', 'pages'];   // order matters: i18n before ux (ux applies the saved language), quiz-engine before ux, ux before ColorSystem (it listens to UX), ColorSystem before ui
       var left = files.length;
       files.forEach(function (name) {
         var s = document.createElement('script');

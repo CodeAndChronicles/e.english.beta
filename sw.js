@@ -12,43 +12,61 @@
    so user learning data is out of its reach by construction. */
 importScripts('JavaScript/version.js');
 
-const CACHE_NAME = self.EE_CACHE_NAME;       // e.g. "e-english-v11.3.1-js4" (app version 11.3.1 + JavaScript loading version 4)
+const CACHE_NAME = self.EE_CACHE_NAME;       // e.g. "e-english-v11.3.2-js5" (app version 11.3.2 + JavaScript loading version 5)
 const CACHE_PREFIX = self.EE_CACHE_PREFIX;   // "e-english-"
 
 // JavaScript files are requested as "<file>.js?js=<EE_JS_VERSION>" (index.html), so the
 // JavaScript loading version is part of the URL that is fetched and cached.
 const JSQ = '?js=' + self.EE_JS_VERSION;
-const SHELL = [
-  './', 'index.html', 'app.json', 'README.md', 'README.ar.md', 'manifest.webmanifest',
-  'CSS/root.css', 'CSS/responsive.css', 'CSS/animations.css', 'CSS/settings.css',
-  'JavaScript/version.js', 'JavaScript/icons.js' + JSQ, 'JavaScript/i18n.js' + JSQ, 'JavaScript/quiz-engine.js' + JSQ, 'JavaScript/ux.js' + JSQ,
-  'JavaScript/ui.js' + JSQ, 'JavaScript/settings.js' + JSQ, 'JavaScript/readme.js' + JSQ, 'JavaScript/pages.js' + JSQ,
-  'Ui/Logo.png', 'Ui/Regular.ttf', 'Ui/Bold.ttf'
+// ESSENTIAL files: without any one of them the app cannot start offline. Installing the
+// worker FAILS if one cannot be fetched (the previous worker and cache keep serving, and the
+// browser tries the install again later) — so a half-filled cache is never activated.
+const CORE = [
+  './', 'index.html', 'app.json', 'manifest.webmanifest', 'README.md', 'README.ar.md',
+  'CSS/root.css', 'CSS/ColorSystem.css', 'CSS/responsive.css', 'CSS/animations.css', 'CSS/settings.css',
+  'JavaScript/version.js', 'JavaScript/icons.js' + JSQ, 'JavaScript/i18n.js' + JSQ, 'JavaScript/quiz-engine.js' + JSQ,
+  'JavaScript/ux.js' + JSQ, 'JavaScript/ColorSystem.js' + JSQ, 'JavaScript/ui.js' + JSQ, 'JavaScript/settings.js' + JSQ,
+  'JavaScript/readme.js' + JSQ, 'JavaScript/pages.js' + JSQ
 ];
+// NICE-TO-HAVE files: stored when they can be; one missing never blocks the install
+// (the page has fallbacks, and the fetch handler stores them the first time they load).
+const OPTIONAL = ['Ui/Logo.png', 'Ui/Regular.ttf', 'Ui/Bold.ttf'];
 
-// Precache with cache:'reload' so the new version's cache is filled from the
-// network, never from the browser's HTTP cache (which could still hold the
-// previous version's files).
+// The cached page every navigation falls back to, resolved against the worker's scope so it
+// is right under a sub-path such as https://user.github.io/repo/.
+const INDEX_URL = new URL('index.html', self.registration.scope).href;
+const SCOPE_URL = self.registration.scope;
+
+// Fetch with cache:'reload' so the new version's cache is filled from the network, never
+// from the browser's HTTP cache (which could still hold the previous version's files).
 function fresh(url) { return new Request(url, { cache: 'reload' }); }
+
+// Store one file; reject when it is missing/not OK. A redirected answer is stored as a plain
+// copy: a navigation may not be answered with a redirected response.
+async function precache(cache, url) {
+  const req = fresh(url);
+  const res = await fetch(req);
+  if (!res || !res.ok) throw new Error('precache failed: ' + url + ' (' + (res && res.status) + ')');
+  const clean = res.redirected ? new Response(await res.blob(), { status: 200, statusText: 'OK', headers: res.headers }) : res;
+  await cache.put(new Request(url), clean);
+}
 
 self.addEventListener('install', function (event) {
   event.waitUntil((async function () {
     const cache = await caches.open(CACHE_NAME);
-    // One missing file must never make the whole install fail (that is what
-    // happens with cache.addAll when a listed file 404s — the worker would
-    // never install and offline mode would be dead). Fast path first; if it
-    // fails, add the files one by one and keep whatever exists.
     try {
-      await cache.addAll(SHELL.map(fresh));
-    } catch (e) {
-      await Promise.all(SHELL.map(function (u) { return cache.add(fresh(u)).catch(function () {}); }));
-    }
-    // Content files are listed in app.json — cache them too.
-    try {
+      // 1) essential files, then 2) every lesson file listed in app.json (also essential:
+      //    studying offline needs them). Any failure aborts the install.
+      await Promise.all(CORE.map(function (u) { return precache(cache, u); }));
       const cfg = await (await fetch(fresh('app.json'))).json();
-      await Promise.all((cfg.files || []).map(function (f) { return cache.add(fresh('Files/' + f)).catch(function () {}); }));
-    } catch (e) {}
-    await self.skipWaiting();
+      await Promise.all((cfg.files || []).map(function (f) { return precache(cache, 'Files/' + f); }));
+    } catch (e) {
+      await caches.delete(CACHE_NAME);          // never leave an incomplete cache behind
+      throw e;                                   // install fails -> this worker is not activated
+    }
+    // 3) optional files: best effort, never fatal
+    await Promise.all(OPTIONAL.map(function (u) { return precache(cache, u).catch(function () {}); }));
+    await self.skipWaiting();                    // reached only when everything essential is cached
   })());
 });
 
@@ -85,13 +103,17 @@ self.addEventListener('fetch', function (event) {
   }
   event.respondWith((async function () {
     const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(req, { ignoreSearch: true });
+    const isNav = req.mode === 'navigate';
+    // Navigations (start_url, typed address, installed-app launch, reload) are answered by
+    // the cached app page whatever their URL looks like (with/without index.html, query).
+    const cached = await cache.match(req, { ignoreSearch: true }) || (isNav ? (await cache.match(INDEX_URL) || await cache.match(SCOPE_URL)) : undefined);
     const network = fetch(req, { cache: 'no-cache' }).then(function (res) {
-      if (res && res.ok) cache.put(req, res.clone());
+      if (res && res.ok && !res.redirected && res.type === 'basic') cache.put(req, res.clone());
       return res;
     }).catch(function () { return null; });
     if (cached) { event.waitUntil(network); return cached; }
     const res = await network;
-    return res || (req.mode === 'navigate' ? cache.match('index.html') : Response.error());
+    if (res) return res;
+    return isNav ? (await cache.match(INDEX_URL) || await cache.match(SCOPE_URL) || Response.error()) : Response.error();
   })());
 });

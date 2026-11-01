@@ -1,0 +1,397 @@
+/* ColorSystem.css — the ONE place where E.English colors are defined.
+
+   Layers (top to bottom):
+     1. Base themes      — Light and Dark surfaces, text, borders, semantic + content colors
+     2. Palettes         — accent sets for each choice (six offered + retired ones kept working)
+     3. Roles            — what components use: --role-* (and the semantic names below)
+     4. Semantic names   — --color-background / -surface / -text-primary / -focus ... (aliases)
+     5. Samples          — literal swatch / mode-sample colors for the palette picker and tags
+
+   Rules for the rest of the CSS: do not write a literal color (hex / rgb / hsl) in any other
+   file; use a token from this file. ColorSystem.js only switches data-theme / data-color on
+   <html>; every value below follows from those two attributes — nothing is re-rendered. */
+
+/* ---- Theme tokens: driven ONLY by data-theme, set by ui.js from the
+   EFFECTIVE theme (UX.getTheme()). "system" is resolved in JS, so the CSS
+   never needs a prefers-color-scheme query. `:root` (no attribute) is the
+   pre-JS fallback for the first paint. ---- */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Neutrals: cool greys, tuned for long reading (text 15:1, muted text 5.4:1) */
+  --color-bg: #F5F6F8;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #ECEFF3;
+  --color-border: #DDE2E8;
+  --color-text: #1A1F26;
+  --color-text-muted: #5B6674;
+  --color-disabled: #AEB6C1;
+
+  /* Default primary: neutral graphite. White on it = 9.0:1; as text on white = 9.0:1. */
+  --color-primary: #3F4A57;
+  --color-primary-hover: #2F3944;
+  --color-primary-contrast: #FFFFFF;
+  --color-ink: #3F4A57;
+  --color-mint: #ECEFF3;
+  --color-mint-strong: #DDE2E8;
+
+  /* Semantic states (never re-pointed by an accent) */
+  --color-success: #1D7A3B;
+  --color-success-bg: #E1F5E8;
+  --color-review: #8A5A00;
+  --color-review-bg: #FBF0D6;
+  --color-danger: #BE2530;
+  --color-danger-bg: #FBE6E7;
+
+  /* Known-word card tint: semantic green by default, accent tint when an accent is picked */
+  --color-known-bg: var(--color-success-bg);
+  --color-known-border: #BFE6CD;
+  /* "Learned" checkbox / accent bar: semantic green by default, the accent when one is picked */
+  --color-known-fill: #1D7A3B;
+  --color-known-contrast: #FFFFFF;
+
+  /* Content-type "tones": the primary plus three quiet secondaries. They are used
+     only to tell the four content types apart (and for matching icons); under an
+     accent every tone becomes that accent. Amber is NOT a tone: it means "review". */
+  --tone-blue: #2C6BA8;   --tone-blue-bg: #E8F0F9;     /* Vocabulary  (= the primary) */
+  --tone-cyan: #1D7773;   --tone-cyan-bg: #DFF1F0;     /* Synonyms & Antonyms (teal) */
+  --tone-violet: #6A4FA3; --tone-violet-bg: #ECE8F6;   /* Idioms & Phrasal Verbs */
+  --tone-rose: #8B4A7D;   --tone-rose-bg: #F6E8F2;     /* Derivatives (plum) */
+  --tone-amber: #8A5A00;  --tone-amber-bg: #FBF0D6;
+  --tone-slate: #4F5B69;  --tone-slate-bg: #E9EDF1;
+
+  /* Part of speech: one color each */
+  --pos-noun-fg: #1F5FBF;  --pos-noun-bg: #E5EDFB;
+  --pos-verb-fg: #B4491A;  --pos-verb-bg: #FBEBDF;
+  --pos-adj-fg: #7047B5;   --pos-adj-bg: #EEE7F8;
+  --pos-adv-fg: #0E7490;   --pos-adv-bg: #DFF2F7;
+  --pos-pron-fg: #B3336B;  --pos-pron-bg: #FBE6EE;
+  --pos-prep-fg: #2A7330;  --pos-prep-bg: #E3F3E4;
+  --pos-conj-fg: #856400;  --pos-conj-bg: #FBF2CF;
+  --pos-other-fg: #5A6470; --pos-other-bg: #ECEEF1;
+
+  /* Study highlighter chips + pen inks. These are NOT the theme: a highlighter
+     color is only a way to catch the eye, it never stands for a meaning. */
+  --hlt-yellow: #F5C518;
+  --hlt-green: #3DAE6A;
+  --hlt-purple: #8E6BD8;
+  --hlt-pink: #E0629F;
+  --hlt-alpha: 30%;
+  --pen-blue: #2B62C4;
+  --pen-red: #C1272D;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.09);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #13171C;
+  --color-surface: #1D2229;
+  --color-surface-alt: #272D35;
+  --color-border: #333A44;
+  --color-text: #EDF0F4;
+  --color-text-muted: #A2ACB8;
+  --color-disabled: #565F6B;
+
+  --color-primary: #C3CCD6;
+  --color-primary-hover: #D5DCE4;
+  --color-primary-contrast: #161B21;
+  --color-ink: #C3CCD6;
+  --color-mint: #262D35;
+  --color-mint-strong: #333A44;
+
+  --color-success: #6FCF8A;
+  --color-success-bg: #11291A;
+  --color-review: #E3B04B;
+  --color-review-bg: #33260C;
+  --color-danger: #F28B90;
+  --color-danger-bg: #3A181A;
+
+  --color-known-bg: var(--color-success-bg);
+  --color-known-border: #1E4A2E;
+  --color-known-fill: #6FCF8A;
+  --color-known-contrast: #06210F;
+
+  --tone-blue: #7DB3EA;   --tone-blue-bg: #182A3F;
+  --tone-cyan: #5CC3BC;   --tone-cyan-bg: #10302F;
+  --tone-violet: #B3A0E6; --tone-violet-bg: #251F3B;
+  --tone-rose: #DDA0CF;   --tone-rose-bg: #35202F;
+  --tone-amber: #E3B04B;  --tone-amber-bg: #33260C;
+  --tone-slate: #A9B4C2;  --tone-slate-bg: #232A31;
+
+  --pos-noun-fg: #8DB1F2;  --pos-noun-bg: #182640;
+  --pos-verb-fg: #F0A070;  --pos-verb-bg: #3A2213;
+  --pos-adj-fg: #B79BEA;   --pos-adj-bg: #271D3B;
+  --pos-adv-fg: #67CBE0;   --pos-adv-bg: #10303A;
+  --pos-pron-fg: #E58BB3;  --pos-pron-bg: #3A1626;
+  --pos-prep-fg: #7FCB84;  --pos-prep-bg: #15301A;
+  --pos-conj-fg: #E2C04D;  --pos-conj-bg: #352C0B;
+  --pos-other-fg: #AAB3BE; --pos-other-bg: #262B31;
+
+  --hlt-yellow: #F2D04F;
+  --hlt-green: #55C985;
+  --hlt-purple: #A98BEA;
+  --hlt-pink: #EE86B7;
+  --hlt-alpha: 26%;
+  --pen-blue: #82A9F2;
+  --pen-red: #F08A8E;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+/* =====================================================================
+   Accent palettes. Each defines six tokens per mode:
+     --color-primary          fill (buttons, active segments)
+     --color-primary-hover    hover fill
+     --color-primary-contrast text on the fill (>= 4.5:1, checked below)
+     --color-ink              accent as TEXT / icon / bar on surfaces (>= 4.5:1)
+     --color-mint             soft tint (hover, secondary buttons, badges)
+     --color-mint-strong      stronger tint (borders, pressed)
+   No neon, no green. ===================================================== */
+
+/* Shared: any explicit accent unifies the tones and the known-card tint.
+   (Same specificity as the [data-theme] blocks above and placed after them,
+   so it wins; the semantic success/review/danger/POS tokens are not listed
+   here on purpose.) */
+:root[data-color] {
+  --color-known-bg: var(--color-mint);
+  --color-known-border: var(--color-mint-strong);
+  --color-known-fill: var(--color-primary);
+  --color-known-contrast: var(--color-primary-contrast);
+  --tone-blue: var(--color-ink);   --tone-blue-bg: var(--color-mint);
+  --tone-cyan: var(--color-ink);   --tone-cyan-bg: var(--color-mint);
+  --tone-amber: var(--color-ink);  --tone-amber-bg: var(--color-mint);
+  --tone-violet: var(--color-ink); --tone-violet-bg: var(--color-mint);
+  --tone-rose: var(--color-ink);   --tone-rose-bg: var(--color-mint);
+  --tone-slate: var(--color-ink);  --tone-slate-bg: var(--color-mint);
+}
+
+/* ---- The six palettes (light fill carries white text; dark fill carries dark text;
+   --color-ink is the accent as text/icon on surfaces, >= 4.5:1 on its own tints). ---- */
+
+/* Burgundy */
+:root[data-color="burgundy"][data-theme="light"] {
+  --color-primary: #7A1F32; --color-primary-hover: #631828; --color-primary-contrast: #FFFFFF;
+  --color-ink: #7A1F32; --color-mint: #F8E9EC; --color-mint-strong: #F0D0D6;
+}
+:root[data-color="burgundy"][data-theme="dark"] {
+  --color-primary: #E8909F; --color-primary-hover: #EFA7B3; --color-primary-contrast: #3A0D18;
+  --color-ink: #EFA3B0; --color-mint: #3A1A21; --color-mint-strong: #522631;
+}
+
+/* Lavender */
+:root[data-color="lavender"][data-theme="light"] {
+  --color-primary: #6B4FBB; --color-primary-hover: #5A41A2; --color-primary-contrast: #FFFFFF;
+  --color-ink: #5A41A2; --color-mint: #F0ECFA; --color-mint-strong: #E0D8F4;
+}
+:root[data-color="lavender"][data-theme="dark"] {
+  --color-primary: #BBA6F0; --color-primary-hover: #CBBBF4; --color-primary-contrast: #241645;
+  --color-ink: #C4B6EA; --color-mint: #262038; --color-mint-strong: #352E52;
+}
+
+/* Sky */
+:root[data-color="sky"][data-theme="light"] {
+  --color-primary: #1E72BA; --color-primary-hover: #195F9C; --color-primary-contrast: #FFFFFF;
+  --color-ink: #195F9C; --color-mint: #E6F2FC; --color-mint-strong: #CFE4F7;
+}
+:root[data-color="sky"][data-theme="dark"] {
+  --color-primary: #7CC0F5; --color-primary-hover: #96CDF7; --color-primary-contrast: #07263F;
+  --color-ink: #9CCDF4; --color-mint: #14293B; --color-mint-strong: #1F3D57;
+}
+
+/* Lime */
+:root[data-color="lime"][data-theme="light"] {
+  --color-primary: #4D7C0F; --color-primary-hover: #3E650B; --color-primary-contrast: #FFFFFF;
+  --color-ink: #3E650B; --color-mint: #EEF6DC; --color-mint-strong: #DDEBBB;
+}
+:root[data-color="lime"][data-theme="dark"] {
+  --color-primary: #B2DB52; --color-primary-hover: #C2E574; --color-primary-contrast: #1B2A05;
+  --color-ink: #BEE06A; --color-mint: #1F2A10; --color-mint-strong: #2F4018;
+}
+
+/* Orange */
+:root[data-color="orange"][data-theme="light"] {
+  --color-primary: #B24500; --color-primary-hover: #923800; --color-primary-contrast: #FFFFFF;
+  --color-ink: #923800; --color-mint: #FDEEE0; --color-mint-strong: #F9D9BC;
+}
+:root[data-color="orange"][data-theme="dark"] {
+  --color-primary: #FFA559; --color-primary-hover: #FFB878; --color-primary-contrast: #3A1A00;
+  --color-ink: #FFB06A; --color-mint: #33210F; --color-mint-strong: #4D3318;
+}
+
+/* Teal */
+:root[data-color="teal"][data-theme="light"] {
+  --color-primary: #0B7A75; --color-primary-hover: #086661; --color-primary-contrast: #FFFFFF;
+  --color-ink: #086661; --color-mint: #E0F4F2; --color-mint-strong: #BFE6E3;
+}
+:root[data-color="teal"][data-theme="dark"] {
+  --color-primary: #4FD1C5; --color-primary-hover: #70DDD3; --color-primary-contrast: #04201E;
+  --color-ink: #6AD9CF; --color-mint: #0F2D2B; --color-mint-strong: #184240;
+}
+
+/* =====================================================================
+   Retired palettes — NOT offered in Settings any more, kept only so a choice
+   saved by an earlier version keeps looking exactly the same until the person
+   picks one of the seven. Do not remove: nothing rewrites the saved value.
+   ===================================================================== */
+
+/* Midnight */
+:root[data-color="midnight"][data-theme="light"] {
+  --color-primary: #24407A; --color-primary-hover: #1B3262; --color-primary-contrast: #FFFFFF;
+  --color-ink: #24407A; --color-mint: #E8EDF7; --color-mint-strong: #D0DAEE;
+}
+:root[data-color="midnight"][data-theme="dark"] {
+  --color-primary: #8AA8E8; --color-primary-hover: #A3BCF0; --color-primary-contrast: #0B1630;
+  --color-ink: #9DB7EE; --color-mint: #182240; --color-mint-strong: #20305A;
+}
+
+/* Plum */
+:root[data-color="plum"][data-theme="light"] {
+  --color-primary: #6E2F63; --color-primary-hover: #582650; --color-primary-contrast: #FFFFFF;
+  --color-ink: #6E2F63; --color-mint: #F5E9F3; --color-mint-strong: #EACFE6;
+}
+:root[data-color="plum"][data-theme="dark"] {
+  --color-primary: #D18EC4; --color-primary-hover: #DDA6D2; --color-primary-contrast: #2A0F26;
+  --color-ink: #DCA0D0; --color-mint: #331830; --color-mint-strong: #472245;
+}
+
+/* Petrol */
+:root[data-color="petrol"][data-theme="light"] {
+  --color-primary: #0F5C6B; --color-primary-hover: #0B4855; --color-primary-contrast: #FFFFFF;
+  --color-ink: #0F5C6B; --color-mint: #E2F1F4; --color-mint-strong: #C5E3E9;
+}
+:root[data-color="petrol"][data-theme="dark"] {
+  --color-primary: #5FBCCD; --color-primary-hover: #7BCBDA; --color-primary-contrast: #062229;
+  --color-ink: #78C8D8; --color-mint: #102B31; --color-mint-strong: #173F48;
+}
+
+/* Umber */
+:root[data-color="umber"][data-theme="light"] {
+  --color-primary: #5E3D2B; --color-primary-hover: #4A2F21; --color-primary-contrast: #FFFFFF;
+  --color-ink: #5E3D2B; --color-mint: #F4ECE6; --color-mint-strong: #E6D6CA;
+}
+:root[data-color="umber"][data-theme="dark"] {
+  --color-primary: #D2A487; --color-primary-hover: #DDB69C; --color-primary-contrast: #2B1A10;
+  --color-ink: #DBB096; --color-mint: #31241B; --color-mint-strong: #443327;
+}
+
+/* Rose */
+:root[data-color="rose"][data-theme="light"] {
+  --color-primary: #E39AB6; --color-primary-hover: #DB88A8; --color-primary-contrast: #3A0F22;
+  --color-ink: #A03A65; --color-mint: #FBEDF2; --color-mint-strong: #F5D8E3;
+}
+:root[data-color="rose"][data-theme="dark"] {
+  --color-primary: #EBA5BF; --color-primary-hover: #F1BBD0; --color-primary-contrast: #3A0F22;
+  --color-ink: #EBAEC5; --color-mint: #361D28; --color-mint-strong: #4C2A3A;
+}
+
+/* Sand */
+:root[data-color="sand"][data-theme="light"] {
+  --color-primary: #D9B679; --color-primary-hover: #CFA967; --color-primary-contrast: #3A2A08;
+  --color-ink: #7A560A; --color-mint: #FAF3E4; --color-mint-strong: #F1E3C3;
+}
+:root[data-color="sand"][data-theme="dark"] {
+  --color-primary: #E3C288; --color-primary-hover: #EBD1A2; --color-primary-contrast: #3A2A08;
+  --color-ink: #E1C48F; --color-mint: #332B1B; --color-mint-strong: #493E28;
+}
+
+
+/* ======================================================================
+   Role-based color tokens (v11.2)
+   Components use these ROLES; each one points at the existing theme/palette
+   variable, so Light/Dark and all palettes (including saved legacy ones) change
+   them automatically. Feedback colors (success / warning / error / review flag)
+   are NOT part of the palette: they keep their own variables.
+   ====================================================================== */
+:root {
+  --role-bg: var(--color-bg);
+  --role-surface: var(--color-surface);
+  --role-surface-alt: var(--color-surface-alt);
+  --role-text: var(--color-text);
+  --role-text-muted: var(--color-text-muted);
+  --role-border: var(--color-border);
+  --role-control: var(--color-surface-alt);          /* resting background of a control */
+  --role-control-hover: var(--color-mint);
+  --role-accent: var(--color-primary);               /* filled accent (buttons, selected pill) */
+  --role-on-accent: var(--color-primary-contrast);
+  --role-accent-text: var(--color-ink);              /* accent as text / icon on a surface */
+  --role-accent-soft: var(--color-mint);
+  --role-accent-soft-strong: var(--color-mint-strong);
+  --role-accent-hover: var(--color-primary-hover);
+  --role-focus: var(--color-ink);                    /* keyboard focus ring: the accent, always >= 4.5:1 on a surface */
+  --role-disabled-bg: var(--color-surface-alt);
+  --role-disabled-text: var(--color-text-muted);
+  --role-on-danger: #FFFFFF;                          /* text on a solid danger button (semantic, not palette) */
+}
+
+
+/* ======================================================================
+   Version 11.3.1 — the rest of the role-token layers
+   Layers: base surfaces · text · palette identity · semantic · interactive · data
+   · content-specific. Six supporting hues are MIXED with the selected palette's accent
+   (color-mix), so every palette gives the whole interface its own coordinated tones
+   while the hues stay recognisable. Semantic colors (success / warning / danger / review)
+   keep their own variables and are not touched by the palette.
+   ====================================================================== */
+:root {
+  --hue-blue: #2C6BA8; --hue-green: #2E8B57; --hue-amber: #B8790A; --hue-purple: #7A55C2; --hue-pink: #C2487E; --hue-teal: #0E8A86;
+  --role-text-secondary: var(--color-text-muted);
+  --role-text-disabled: color-mix(in srgb, var(--color-text-muted) 70%, var(--color-surface));
+  --role-text-inverse: var(--color-primary-contrast);
+  --role-info: var(--hue-blue);
+}
+:root[data-theme="dark"] {
+  --hue-blue: #7DB3EA; --hue-green: #5FCB8A; --hue-amber: #E3B04B; --hue-purple: #B79CF0; --hue-pink: #F08FB8; --hue-teal: #4FD1C5;
+}
+:root {
+  /* palette identity: the accent leaning towards each supporting hue */
+  --pal-1: color-mix(in srgb, var(--color-ink) 40%, var(--hue-blue));
+  --pal-2: color-mix(in srgb, var(--color-ink) 40%, var(--hue-green));
+  --pal-3: color-mix(in srgb, var(--color-ink) 40%, var(--hue-amber));
+  --pal-4: color-mix(in srgb, var(--color-ink) 40%, var(--hue-purple));
+  --pal-5: color-mix(in srgb, var(--color-ink) 40%, var(--hue-pink));
+  --pal-6: color-mix(in srgb, var(--color-ink) 40%, var(--hue-teal));
+  /* data visualisation */
+  --viz-1: var(--role-accent); --viz-2: var(--pal-2); --viz-3: var(--pal-3); --viz-4: var(--pal-4);
+  --viz-track: var(--color-surface-alt);
+}
+
+/* ======================================================================
+   Version 11.3.2 — semantic vocabulary (aliases over the layers above)
+   ====================================================================== */
+:root {
+  --color-background: var(--color-bg);
+  --color-surface-variant: var(--color-surface-alt);
+  --color-text-primary: var(--color-text);
+  --color-text-secondary: var(--color-text-muted);
+  --color-heading: var(--color-text);
+  --color-divider: var(--color-border);
+  --color-accent: var(--color-primary);
+  --color-secondary: var(--pal-4);       /* palette-coordinated supporting tones */
+  --color-tertiary: var(--pal-6);
+  --color-warning: var(--color-review);  /* review flag = the warning hue (fixed in every palette) */
+  --color-error: var(--color-danger);
+  --color-info: var(--role-info);
+  --color-focus: var(--color-ink);
+  --color-hover: var(--color-mint);
+  --color-active: var(--color-mint-strong);
+  --color-skeleton-base: var(--color-surface-alt);
+  --color-skeleton-shine: var(--color-border);
+  --color-tooltip-bg: var(--color-text);
+  --color-tooltip-text: var(--color-bg);
+}
+
+/* ---- Samples: shown regardless of the active palette/theme ---- */
+:root {
+  --swatch-default: #3F4A57;  --swatch-burgundy: #7A1F32; --swatch-lavender: #6B4FBB; --swatch-sky: #1E72BA;
+  --swatch-lime: #4D7C0F;     --swatch-orange: #B24500;   --swatch-teal: #0B7A75;
+  /* retired palettes (still shown if one is saved) */
+  --swatch-midnight: #24407A; --swatch-plum: #6E2F63; --swatch-petrol: #0F5C6B;
+  --swatch-umber: #5E3D2B;    --swatch-rose: #E39AB6;  --swatch-sand: #D9B679;
+  /* the "Light & dark" tag shows both modes */
+  --sample-mode-light: #F3F5F8; --sample-mode-dark: #1B2027;
+}

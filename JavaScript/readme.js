@@ -217,13 +217,26 @@
   const T = global.I18n.t;
   const cache = {};   // text per language, kept in memory for this session only
 
-  function loadReadme(lang) {
-    if (cache[lang] != null) return Promise.resolve(cache[lang]);
-    const file = lang === 'ar' ? 'README.ar.md' : 'README.md';
+  // Network first (so an updated README shows when online), then the app's own offline
+  // cache — so reading works with no connection even if the network request fails.
+  function fetchText(file) {
     return fetch(file).then(function (res) {
       if (!res.ok) throw new Error(file + ' not found');
       return res.text();
-    }).then(function (txt) { cache[lang] = txt; return txt; });
+    });
+  }
+  function cachedText(file) {
+    if (!('caches' in global)) return Promise.reject(new Error('no cache'));
+    return global.caches.match(file, { ignoreSearch: true }).then(function (res) {
+      if (!res) throw new Error(file + ' not cached');
+      return res.text();
+    });
+  }
+  function loadFile(file) { return fetchText(file).catch(function () { return cachedText(file); }); }
+  function loadReadme(lang) {
+    if (cache[lang] != null) return Promise.resolve(cache[lang]);
+    const file = lang === 'ar' ? 'README.ar.md' : 'README.md';
+    return loadFile(file).then(function (txt) { cache[lang] = txt; return txt; });
   }
 
   // The rendered Markdown is one flat list of blocks. Reorganize it into the
@@ -282,12 +295,17 @@
     screen.appendChild(holder);
     const lang = global.I18n.getLang();
 
+    let usedFallback = false;
     loadReadme(lang).catch(function () {
-      // No Arabic file reachable: fall back to the English README rather than nothing.
-      return lang === 'ar' ? loadReadme('en') : Promise.reject(new Error('readme'));
+      // The Arabic README can be reached neither online nor from the cache: show the
+      // English one (and say so) rather than an empty screen.
+      if (lang !== 'ar') return Promise.reject(new Error('readme'));
+      usedFallback = true;
+      return loadReadme('en');
     }).then(function (txt) {
       if (!holder.isConnected) return; // user already left this screen
       while (holder.firstChild) holder.removeChild(holder.firstChild);
+      if (usedFallback) holder.appendChild(h('p', { class: 'readme-fallback-note', role: 'status', text: T('The Arabic README is not available right now. Showing the English version.') }));
       const body = render(txt);
       holder.appendChild(toSections(body));
     }).catch(function () {
@@ -300,7 +318,8 @@
   global.I18n.extend({
     'Loading README...': 'جارٍ تحميل اقرأني...',
     'Could not load README.md. Check your connection and try again.': 'تعذّر تحميل ملف README. تحقق من اتصالك وحاول مرة أخرى.',
-    'Contents': 'المحتويات'
+    'Contents': 'المحتويات',
+    'The Arabic README is not available right now. Showing the English version.': 'نسخة README العربية غير متاحة حاليًا. تُعرض النسخة الإنجليزية.'
   });
 
   global.UI = global.UI || {};

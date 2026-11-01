@@ -51,7 +51,8 @@
     'WhatsApp username': 'اسم المستخدم على واتساب',
     'The button opens a WhatsApp chat with the developer. This website does not send, collect or store your message.': 'يفتح الزر محادثة واتساب مع المطوّر. هذا الموقع لا يرسل رسالتك ولا يجمعها ولا يخزّنها.',
     'If the button does not open WhatsApp, search for this username in WhatsApp.': 'إذا لم يفتح الزر واتساب، ابحث عن اسم المستخدم هذا داخل واتساب.',
-    'Version': 'الإصدار', 'Information': 'المعلومات', "What's New": 'الجديد', 'Features': 'المزايا',
+    'Version': 'الإصدار', 'Information': 'المعلومات', "What's New": 'الجديد', 'Features': 'المزايا', 'Bugs Fixed': 'الأخطاء التي أُصلحت', 'Version 11 series': 'سلسلة الإصدار 11', 'Beta': 'تجريبي',
+    'marks Beta features: new, or dependent on your device or browser, and still open to change.': 'تميّز الخصائص التجريبية: الجديدة أو المعتمدة على جهازك أو متصفحك، وقد تتغير.',
     'Offline-first': 'يعمل بدون إنترنت', 'Installable web app': 'تطبيق ويب قابل للتثبيت', 'Local data': 'بيانات محلية',
     'Local learning data': 'بيانات تعلّم محلية', 'Progress tracking': 'تتبّع التقدّم',
     'English + Arabic': 'إنجليزي + عربي', 'Light & dark': 'فاتح وداكن'
@@ -126,23 +127,58 @@
   }
 
   /* ---------------- Info: version, changelog, purpose ---------------- */
-  // Version 11.3.1 changelog — only what this release actually changed.
-  const CHANGELOG = {
+  // What's New — the whole Version 11 series, newest last. Every line comes from the release
+  // notes of that version (nothing is guessed); versions without a record are not listed.
+  const SERIES = {
     en: [
-      'Cards now size to their own content, so a short card no longer leaves a blank gap beside a tall one, and they glide to new places when the window is resized.',
-      'The chosen palette now colors the whole app: cards, tags, numbered steps, progress and statistics.',
-      'Palette options are capsules with a swatch and a visible name; selectors work like radio groups and switches show On or Off.',
-      'Progress bars fill smoothly, the navigation highlight slides between pages, and the loading skeleton matches the Home screen.',
-      'A quick Keep screen awake button joins the language and theme buttons, in step with Settings.',
-      'Info has a three-sentence description and six feature tags; Study Method is now a set of independent cards.'
+      ['11.0', 'Arabic and English interface with right-to-left layout; your language choice is saved.'],
+      ['11.0', 'Feedback section with a WhatsApp contact button; Info shows the version and what is new.'],
+      ['11.0', 'Seven color choices for Light, Dark and System modes, and a Read Me organised in sections, with an Arabic version.'],
+      ['11.2', 'Units 4 to 6 added; Home shows each unit\u2019s word count; Review grouped by unit with each word\u2019s Arabic translation.'],
+      ['11.2', 'Settings: compact selectors, an animations switch with a preview, a local storage indicator, and the font option named Auto.'],
+      ['11.2', 'The logo no longer appears inside the app, the name is written E.English, and an ownership notice was added.'],
+      ['11.3', 'Pill-shaped navigation with a More menu; language and theme as separate buttons; Info and Settings redesigned in cards.'],
+      ['11.3', 'Review uses the flag button and keeps a removed word for 3 seconds; language switching also works on the screen shown when lessons cannot load from a file.'],
+      ['11.3.1', 'Cards size to their own content, the palette colors the whole app, palette options show their names, progress bars and navigation animate, and a Keep screen awake quick button joins the controls.'],
+      ['11.3.2', 'One central color system (ColorSystem.css and ColorSystem.js) now defines every color for Light, Dark and all palettes.'],
+      ['11.3.2', 'Word Review and Quiz History redesigned as cards, a Statistics dashboard for wide screens, and a Study Method that separates ordered steps from tips.'],
+      ['11.3.2', 'Offline start is stricter: the app is only installed offline when every essential file is saved, and both Read Me files work without a connection. Keyboard shortcuts added \uD83E\uDDEA.']
     ],
     ar: [
-      'تتحدد أحجام البطاقات الآن بحسب محتواها، فلا تترك بطاقة قصيرة فراغًا بجانب بطاقة طويلة، وتنتقل بسلاسة إلى أماكنها الجديدة عند تغيير حجم النافذة.',
-      'اللوحة المختارة تلوّن التطبيق كله الآن: البطاقات والوسوم والخطوات المرقّمة والتقدّم والإحصائيات.',
-      'خيارات اللوحات صارت كبسولات بعينة لون واسم ظاهر؛ وتعمل أزرار الاختيار كمجموعات اختيار، وتعرض المفاتيح حالة تشغيل أو إيقاف.',
-      'تمتلئ أشرطة التقدّم بسلاسة، ويتحرك تمييز التنقل بين الصفحات، ويطابق هيكل التحميل الشاشة الرئيسية.',
-      'انضم زر سريع لإبقاء الشاشة مضاءة إلى زرّي اللغة والمظهر، ويتزامن مع الإعدادات.',
-      'تحتوي المعلومات على وصف من ثلاث جمل وست وسوم للمزايا؛ وصارت طريقة المذاكرة بطاقات مستقلة.'
+      ['11.0', 'واجهة بالعربية والإنجليزية مع تخطيط من اليمين إلى اليسار، ويُحفظ اختيار اللغة.'],
+      ['11.0', 'قسم للملاحظات مع زر واتساب للتواصل؛ وتعرض المعلومات الإصدار والجديد.'],
+      ['11.0', 'سبعة خيارات للألوان في الوضع الفاتح والداكن والنظام، وصفحة اقرأني منظمة في أقسام مع نسخة عربية.'],
+      ['11.2', 'إضافة الوحدات من 4 إلى 6؛ وتعرض الشاشة الرئيسية عدد كلمات كل وحدة؛ والمراجعة مجمّعة حسب الوحدة مع الترجمة العربية لكل كلمة.'],
+      ['11.2', 'الإعدادات: أزرار اختيار مدمجة، ومفتاح للحركة مع معاينة، ومؤشر للتخزين المحلي، وخيار الخط باسم تلقائي.'],
+      ['11.2', 'لم يعد الشعار يظهر داخل التطبيق، ويُكتب الاسم E.English، وأُضيف إشعار الملكية.'],
+      ['11.3', 'تنقل بشكل حبة دائرية كاملة مع قائمة المزيد؛ واللغة والمظهر كزرّين منفصلين؛ وإعادة تصميم المعلومات والإعدادات في بطاقات.'],
+      ['11.3', 'تستخدم المراجعة زر العلم وتُبقي الكلمة المُزالة 3 ثوانٍ؛ ويعمل تبديل اللغة أيضًا في الشاشة التي تظهر عند تعذّر تحميل الدروس من ملف.'],
+      ['11.3.1', 'تتحدد أحجام البطاقات بمحتواها، وتلوّن اللوحة التطبيق كله، وتعرض خيارات اللوحات أسماءها، وتتحرك أشرطة التقدم والتنقل، وينضم زر سريع لإبقاء الشاشة مضاءة.'],
+      ['11.3.2', 'نظام ألوان مركزي واحد (ColorSystem.css وColorSystem.js) يعرّف الآن كل الألوان للوضعين الفاتح والداكن ولكل اللوحات.'],
+      ['11.3.2', 'إعادة تصميم مراجعة الكلمات وسجل الاختبارات في بطاقات، ولوحة إحصائيات للشاشات العريضة، وطريقة مذاكرة تفصل الخطوات المرتبة عن النصائح.'],
+      ['11.3.2', 'بدء أدق بدون إنترنت: لا يُثبَّت التطبيق إلا بعد حفظ كل الملفات الأساسية، وتعمل نسختا اقرأني بدون اتصال. وأُضيفت اختصارات لوحة المفاتيح \uD83E\uDDEA.']
+    ]
+  };
+
+  // Bugs Fixed — only fixes made and code-reviewed in 11.3.2.
+  const BUGS = {
+    en: [
+      'Changing the theme or palette felt very slow: every element on the page was being animated at once. It is now one short cross-fade (or instant where the browser cannot do it).',
+      'The bottom bar disappeared on desktop after choosing a palette or opening search, until you clicked elsewhere.',
+      'Installed app could not start offline in some cases: a half-filled cache could be activated. Install now fails safely instead, and navigation falls back to the saved app page.',
+      'Read Me needed the internet in some cases; it now reads from the saved copy when the network fails, with a clear English fallback for Arabic.',
+      'Search could show old results after you cleared the box or left and came back; it also re-processed every word on each key press.',
+      'Study Method numbered tips as if they were steps.',
+      'Duplicate theme-button updates and a duplicate page entrance animation were removed.'
+    ],
+    ar: [
+      'كان تغيير الثيم أو اللوحة بطيئًا جدًا لأن كل عنصر في الصفحة كان يُحرَّك في وقت واحد. صار الآن تلاشيًا قصيرًا واحدًا (أو فوريًا إن لم يدعمه المتصفح).',
+      'كان الشريط السفلي يختفي على الحاسوب بعد اختيار لوحة ألوان أو فتح البحث حتى تضغط في مكان آخر.',
+      'كان التطبيق المثبّت لا يبدأ بدون إنترنت في بعض الحالات لأن ذاكرة ناقصة قد تُفعَّل. صار التثبيت يفشل بأمان بدلًا من ذلك، ويعود التنقل إلى صفحة التطبيق المحفوظة.',
+      'كانت اقرأني تحتاج إلى الإنترنت أحيانًا؛ وهي الآن تقرأ من النسخة المحفوظة عند تعذّر الشبكة، مع بديل إنجليزي واضح للعربية.',
+      'كان البحث قد يعرض نتائج قديمة بعد مسح المربع أو الخروج والعودة؛ وكان يعيد معالجة كل الكلمات عند كل ضغطة مفتاح.',
+      'كانت طريقة المذاكرة ترقّم النصائح كأنها خطوات.',
+      'أُزيل تحديث مكرر لزر المظهر وحركة دخول مكررة للصفحة.'
     ]
   };
 
@@ -169,6 +205,8 @@
     ['languages', 'English + Arabic', 'lang'], ['chart-column', 'Progress tracking', 'progress'], ['sun-moon', 'Light & dark', 'theme']
   ];
 
+  function betaMark() { return h('span', { class: 'beta-mark', role: 'img', 'aria-label': T('Beta'), title: T('Beta'), text: '\uD83E\uDDEA' }); }
+
   function titleWithIcon(iconName, text) {
     return h('h2', { class: 'info-card-title' }, [h('span', { class: 'card-title-icon', 'aria-hidden': 'true' }, [icon(iconName)]), h('span', { text: text })]);
   }
@@ -184,13 +222,18 @@
         version ? h('span', { class: 'version-badge' }, [h('span', { class: 'version-badge-label', text: T('Version') }), h('strong', { text: version })]) : null
       ]),
       h('ul', { class: 'feature-tags', 'aria-label': T('Features') }, FEATURES.map(function (f) {
-        return h('li', { class: 'feature-tag', 'data-tag': f[2] }, [icon(f[0]), h('span', { text: T(f[1]) })]);
+        return h('li', { class: 'feature-tag', 'data-tag': f[2] }, [icon(f[0]), h('span', { text: T(f[1]) }), f[2] === 'install' ? betaMark() : null]);
       })),
-      h('p', { class: 'about-purpose', text: pick(PURPOSE).join(' ') })
+      h('p', { class: 'about-purpose', text: pick(PURPOSE).join(' ') }),
+      h('p', { class: 'beta-legend' }, [betaMark(), h('span', { text: ' ' + T('marks Beta features: new, or dependent on your device or browser, and still open to change.') })])
     ]);
     const news = h('section', { class: 'card info-card about-card', 'aria-label': T("What's New") }, [
-      h('div', { class: 'about-head' }, [titleWithIcon('sparkles', T("What's New"))]),
-      h('ol', { class: 'changelog' }, pick(CHANGELOG).map(function (line) { return h('li', { text: line }); }))
+      h('div', { class: 'about-head' }, [titleWithIcon('sparkles', T("What's New")), h('span', { class: 'series-note', text: T('Version 11 series') })]),
+      h('ol', { class: 'changelog' }, pick(SERIES).map(function (r) {
+        return h('li', {}, [h('span', { class: 'cl-ver', text: r[0] }), h('span', { text: ' ' + r[1] })]);
+      })),
+      h('h3', { class: 'about-sub bugs-title' }, [icon('bug'), h('span', { text: T('Bugs Fixed') })]),
+      h('ul', { class: 'bugs-list' }, pick(BUGS).map(function (line) { return h('li', { text: line }); }))
     ]);
     return h('div', { class: 'about-grid masonry' }, [info, news]);
   }
@@ -198,6 +241,7 @@
   global.UI = global.UI || {};
   global.UI.renderFeedback = renderFeedback;
   global.UI.buildAbout = buildAbout;
+  global.UI.betaMark = betaMark;
   // Exposed (read-only) so the sentence count can be verified.
-  global.UI.aboutContent = { purpose: PURPOSE, changelog: CHANGELOG, whatsappUrl: WHATSAPP_URL };
+  global.UI.aboutContent = { purpose: PURPOSE, series: SERIES, bugs: BUGS, whatsappUrl: WHATSAPP_URL };
 })(window);

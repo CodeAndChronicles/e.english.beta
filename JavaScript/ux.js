@@ -956,7 +956,8 @@
     const exact = [], starts = [], includes = [];
     for (let i = 0; i < state.searchIndex.length; i++) {
       const item = state.searchIndex[i];
-      const w = normalize(item.word), m = normalize(item.meaning);
+      const w = item._w !== undefined ? item._w : (item._w = normalize(item.word));       // computed once per item, not per keystroke
+      const m = item._m !== undefined ? item._m : (item._m = normalize(item.meaning));
       if (w === q || m === q) exact.push(item);
       else if (w.indexOf(q) === 0 || m.indexOf(q) === 0) starts.push(item);
       else if (w.indexOf(q) !== -1 || m.indexOf(q) !== -1) includes.push(item);
