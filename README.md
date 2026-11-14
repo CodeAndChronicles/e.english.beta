@@ -2,7 +2,7 @@
 
 **E.English** is a free vocabulary study website for learning English. It works offline after the first visit and keeps all your progress on your own device. There are no accounts and no sign-up.
 
-> **Version 11.3.2.** Features marked 🧪 are **Beta**: new, or dependent on your device or browser, and still open to change. Open a lesson, mark the words you have learned, take a quiz, then come back to the words you missed.
+> **Version 11.3.4.** Features marked **(Beta)** are new, or dependent on your device or browser, and still open to change. Open a lesson, mark the words you have learned, take a quiz, then come back to the words you missed.
 
 ## What you can do
 
@@ -17,7 +17,11 @@
 
 ## Units and lessons
 
-The Home screen lists the units. Each unit card shows the **total number of words** in the unit (vocabulary, synonyms and antonyms, idioms and phrasal verbs, and derivatives together) and how many of them you have learned, plus a progress bar for the whole unit. The same totals are used in Statistics. They come from the lesson content itself, so they update when the lessons change.
+The Home screen lists the units. Each unit card shows the **total number of words** in the unit (vocabulary, synonyms and antonyms, idioms and phrasal verbs, and derivatives together) and how many of them you have learned, plus a progress bar for the whole unit. The same totals are used in Statistics. They come from the lesson content itself, so they update when the lessons change. Under each unit title, three small counters show how many of its words are **Learned**, **Need review** and **Not classified** (they always add up to the unit's total); lessons and word groups show the same counters. The Home heading also shows your overall progress.
+
+## Word states
+
+Every word is in exactly one of three states: **Learned** (you marked it as learned), **Needs review** (you flagged it with the Review button, or a quiz answer put it in Review) or **Not classified**. Marking a word Learned removes it from Review; flagging it for Review removes its Learned mark, so the two never exist together for a word you set yourself. A quiz answer is a separate thing: a wrong or skipped answer adds the word to Review but never changes a Learned mark, and Review shows why each word is there (flagged by you, missed in a quiz, or skipped in a quiz, plus a note if the word is also marked learned). If older saved data held both a Learned mark and a Review flag for one word, the Review flag is kept.
 
 Inside a lesson, each content type is its own section, and words are arranged in small groups you can open and close. Each word shows its type, difficulty and Arabic meaning. Synonyms and Antonyms use larger study cards.
 
@@ -57,7 +61,7 @@ On the Statistics page the Review list is **grouped by unit**. Each word is show
 
 Type in the search box on Home to find any word or meaning. Pick a result to open it in its lesson. Press **Esc** or the **×** button to clear the box. Results always match what is in the box, and clearing it empties the list at once.
 
-## Keyboard shortcuts 🧪
+## Keyboard shortcuts (Beta)
 
 Shortcuts work only when you are not typing in a field, never while a quiz is running, and never with Ctrl, Alt or Cmd held (those stay with your browser and system).
 
@@ -72,20 +76,20 @@ Shortcuts work only when you are not typing in a field, never while a quiz is ru
 - **Language:** English or Arabic. The whole interface changes, including the layout direction. Lesson content (words, meanings, the Arabic study text) is not translated.
 - **Theme mode:** Light, Dark or System. Three round buttons sit together: **Keep screen awake**, **theme** and **language**. They are at the top of the screen on phones and tablets, and beside the navigation bar on desktop, and they are hidden during a quiz. The Keep screen awake button and the switch in Settings always show the same state.
 - **Font style:** **Auto** (the recommended default: bold headings, regular text), **Regular** or **Bold**.
-- **Colors:** one color system covers the whole app. **Accent color:** Default (neutral graphite), Burgundy, Lavender, Sky Blue, Lime, Orange or Teal, shown as named options, in both Light and Dark. The chosen palette colors the whole app (cards, tags, numbered steps, progress), while success, warning, error and the Review flag keep their own colors. Success, warning, error and the Review flag keep their own colors. If an earlier version saved a palette that is no longer offered, it keeps working until you choose a new one.
+- **Colors:** one color system covers the whole app. **Accent color:** Grey (the default), Burgundy, Lavender, Sky Blue, Lime, Orange or Teal, shown as named options, in both Light and Dark. The chosen palette colors the whole app (cards, tags, numbered steps, progress), while success, warning, error and the Review flag keep their own colors. Success, warning, error and the Review flag keep their own colors. If an earlier version saved a palette that is no longer offered, it keeps working until you choose a new one.
 - **Animations:** switch movement on or off, with a small preview. If your device asks for reduced motion, animations stay off.
 - **Local storage:** shows how much browser storage the site uses. It is a real measurement from your browser when your browser provides it; otherwise it says the value is unavailable. The bar uses a 1 GB reference scale only for scale, and browsers do not all guarantee 1 GB.
-- **Keep screen awake** 🧪: stops the screen from turning off while you study, where your browser supports it. If your browser cannot do this, the switch turns back off and tells you.
+- **Keep screen awake** (Beta): stops the screen from turning off while you study, where your browser supports it. If your browser cannot do this, the switch turns back off and tells you.
 - **Data management** (the last section of the page, always visible): **Export Data**, **Import Data** and **Delete All Data**.
 
 ## Info and Feedback
 
-- **Info** shows the app version, six feature tags, a three-sentence description, what is new in this version, the Study Method, the parts of speech, and the ownership notice.
+- **Info** shows the app version, six feature tags and a three-sentence description, an **Icon Legend** explaining the status icons used in the app (Beta, word states and quiz answers), the **Keyboard Shortcuts**, a **What's New** card for the whole Version 11 series and a separate **Bugs Fixed** card, the Study Method (in English when the interface is English), the parts of speech, and the credits.
 - **Feedback** explains how to report a bug, suggest an improvement or share an opinion, and has a **Contact me on WhatsApp** button that opens a chat with the developer (`@Ma7mee7o`). The website does not send, collect or store your message.
 
 ## Working offline and updates
 
-After your first visit with internet, the app, all lessons and both Read Me files are saved in your browser, so lessons, search, quizzes, Statistics, Review, Settings and this Read Me work without a connection. The app is saved only when every essential file was stored; if something could not be saved, the saving is retried on a later visit instead of leaving a half-saved copy. Installing it as an app 🧪 uses the same saved copy to start offline. When a new version is available, the app refreshes its own files once the new ones are ready, and never in the middle of a quiz. Updates replace app files only; your learning data is never touched.
+After your first visit with internet, the app, all lessons and both Read Me files are saved in your browser, so lessons, search, quizzes, Statistics, Review, Settings and this Read Me work without a connection. The app is saved only when every essential file was stored; if something could not be saved, the saving is retried on a later visit instead of leaving a half-saved copy. Installing it as an app (Beta) uses the same saved copy to start offline. When a new version is available, the app refreshes its own files once the new ones are ready, and never in the middle of a quiz. Updates replace app files only; your learning data is never touched.
 
 ## Your data and privacy
 

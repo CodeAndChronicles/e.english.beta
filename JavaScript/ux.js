@@ -535,9 +535,15 @@
     const history = normalizeHistory(state.quizHistory);
     summary.removed.quizRecords = (Array.isArray(state.quizHistory) ? state.quizHistory.length : 0) - history.length;
 
+    // "Learned" and "Needs review (flagged by hand)" are mutually exclusive. Data saved before this
+    // rule can hold both for one word; there is no timestamp to say which came last, so the
+    // explicit manual flag is kept (it is never dropped) and the learned mark is removed.
+    summary.removed.knownConflict = 0;
+    Object.keys(manual).forEach(function (id) { if (known[id]) { delete known[id]; summary.removed.knownConflict++; } });
+
     const r = summary.removed;
     const historyChanged = JSON.stringify(history) !== JSON.stringify(state.quizHistory);
-    const mapsChanged = r.known + r.manualReview + r.autoReview > 0;
+    const mapsChanged = r.known + r.manualReview + r.autoReview + r.knownConflict > 0;
     state.known = known; state.manualReview = manual; state.autoReview = auto; state.quizHistory = history;
     if (mapsChanged) { writeLS(LS_KEYS.known, known); persistReview(); }
     if (historyChanged) writeLS(LS_KEYS.quizHistory, history);
@@ -640,6 +646,7 @@
     if (val) {
       if (needsReview(wordId)) return; // already in review: never create a duplicate record
       state.manualReview[wordId] = true;
+      if (state.known[wordId]) { delete state.known[wordId]; writeLS(LS_KEYS.known, state.known); }   // Needs review replaces Learned
     } else {
       delete state.manualReview[wordId];
       delete state.autoReview[wordId];
@@ -658,7 +665,7 @@
   }
   function restoreReview(snap) {
     if (!snap || !snap.wordId) return false;
-    if (snap.manual) state.manualReview[snap.wordId] = true;
+    if (snap.manual) { state.manualReview[snap.wordId] = true; if (state.known[snap.wordId]) { delete state.known[snap.wordId]; writeLS(LS_KEYS.known, state.known); } }
     if (snap.auto && !state.manualReview[snap.wordId]) state.autoReview[snap.wordId] = snap.auto;
     persistReview();
     emit('state-changed', { wordId: snap.wordId, kind: 'review' });
@@ -701,10 +708,18 @@
     return changed;
   }
 
+  // Marking learned removes the word from Review whatever put it there (a quiz, or the flag
+  // the learner set by hand): Learned and Needs review replace each other.
+  function clearReviewFor(wordIds) {
+    let changed = clearObsoleteAutoReview(wordIds);
+    wordIds.forEach(function (id) { if (state.manualReview[id]) { delete state.manualReview[id]; changed = true; } });
+    if (changed) persistReview();
+    return changed;
+  }
   function setKnown(wordId, val) {
     if (val) state.known[wordId] = true; else delete state.known[wordId];
     writeLS(LS_KEYS.known, state.known);
-    const reviewChanged = val ? clearObsoleteAutoReview([wordId]) : false;
+    const reviewChanged = val ? clearReviewFor([wordId]) : false;
     emit('state-changed', { wordId: wordId, kind: 'known', reviewChanged: reviewChanged });
   }
   function toggleKnown(wordId) { setKnown(wordId, !isKnown(wordId)); }
@@ -712,9 +727,48 @@
   function setGroupKnown(wordIds, val) {
     wordIds.forEach(function (id) { if (val) state.known[id] = true; else delete state.known[id]; });
     writeLS(LS_KEYS.known, state.known);
-    const reviewChanged = val ? clearObsoleteAutoReview(wordIds) : false;
+    const reviewChanged = val ? clearReviewFor(wordIds) : false;
     emit('state-changed', { kind: 'group-known', wordIds: wordIds, reviewChanged: reviewChanged });
   }
+  // The state of one word, from the stored flags. Exactly one of three:
+  //   'review'       flagged by hand, or in Review because of a quiz answer while NOT learned
+  //   'learned'      marked learned (a quiz-made flag on a learned word does not change this)
+  //   'unclassified' neither
+  function getWordState(wordId) {
+    if (state.manualReview[wordId]) return 'review';
+    if (state.known[wordId]) return 'learned';
+    if (state.autoReview[wordId]) return 'review';
+    return 'unclassified';
+  }
+  // Counts for a set of words, each unique wordId counted once. learned + review +
+  // unclassified === total, always. missedInQuiz is a SEPARATE note: words currently carrying
+  // a quiz-made flag (a wrong or skipped answer) — a different thing from the learner's own choice.
+  function summarizeStates(ids) {
+    const seen = {}, out = { total: 0, learned: 0, review: 0, unclassified: 0, missedInQuiz: 0 };
+    ids.forEach(function (id) {
+      if (seen[id]) return;
+      seen[id] = true; out.total++;
+      out[getWordState(id)]++;
+      if (state.autoReview[id]) out.missedInQuiz++;
+    });
+    return out;
+  }
+  function collectIds(unit, lessonKey) {
+    const ids = [];
+    (unit ? unit.lessons : []).forEach(function (lesson) {
+      if (lessonKey && lesson.lessons.join('-') !== lessonKey) return;
+      lesson.sections.forEach(function (section) {
+        section.groups.forEach(function (group) { group.words.forEach(function (w) { ids.push(w.wordId); }); });
+      });
+    });
+    return ids;
+  }
+  function getUnitStateSummary(unitNum, lessonKey) {
+    const unit = state.units.find(function (u) { return u.unit === unitNum; });
+    return summarizeStates(collectIds(unit, lessonKey));
+  }
+  function getStateSummary(wordIds) { return summarizeStates(wordIds || []); }
+
   function getGroupTriState(wordIds) {
     let count = 0;
     for (let i = 0; i < wordIds.length; i++) { if (state.known[wordIds[i]]) count++; }
@@ -1482,6 +1536,7 @@
     getThemeColor: getThemeColor, setThemeColor: setThemeColor, getThemeColors: function () { return THEME_COLORS.slice(); },
     getLanguage: getLanguage, setLanguage: setLanguage,
     getAnimationsEnabled: getAnimationsEnabled, setAnimationsEnabled: setAnimationsEnabled,
+    getWordState: getWordState, getUnitStateSummary: getUnitStateSummary, getStateSummary: getStateSummary,
     getUnitVocabulary: getUnitVocabulary, snapshotReview: snapshotReview, restoreReview: restoreReview,
     getKeepAwake: getKeepAwake, setKeepAwake: setKeepAwake,
     getQuizHistory: function () { return state.quizHistory.slice(); },

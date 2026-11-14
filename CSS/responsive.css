@@ -1145,7 +1145,7 @@ ol.md-list > li::before {
 /* ---- 9. Interactive states: hover / active / focus-visible / disabled ---- */
 .btn:hover:not(:disabled) { filter: none; }
 .btn:active:not(:disabled) { transform: scale(0.98); }
-.btn:focus-visible, .nav-card:focus-visible, .search-input:focus-visible, .segmented-btn:focus-visible, .readme-chip:focus-visible { outline: 2px solid var(--role-focus); outline-offset: 2px; }
+.btn:focus-visible, .nav-card:focus-visible, .segmented-btn:focus-visible, .readme-chip:focus-visible { outline: 2px solid var(--role-focus); outline-offset: 2px; }
 .btn:disabled, button:disabled, .btn[aria-disabled="true"] { background: var(--role-disabled-bg); color: var(--role-disabled-text); border-color: var(--role-border); cursor: not-allowed; opacity: 0.7; transform: none; }
 .search-box:focus-within { border-color: var(--role-accent-text); box-shadow: 0 0 0 3px var(--role-accent-soft); }
 
@@ -1369,3 +1369,136 @@ ol.md-list > li::before {
 .bugs-list li { position: relative; padding-inline-start: 20px; line-height: 1.6; }
 .bugs-list li::before { content: ''; position: absolute; inset-inline-start: 4px; top: 0.65em; width: 8px; height: 8px; border-radius: 50%; background: var(--color-success); }
 .info-credit { margin: 0 0 4px; font-size: var(--font-size-sm); }
+
+
+/* ======================================================================
+   Version 11.3.4 — Phase A
+   1. Card language   2. Home   3. Search   4. Word states   5. Word Review
+   6. Info   7. Natural highlighter   8. Wide screens
+   ====================================================================== */
+
+/* ---- 1. Card language: one background, border, radius, shadow; two paddings ---- */
+.card, .nav-card, .settings-card, .review-group, .qh-item, .info-card, .about-card {
+  background: var(--color-surface-1); border: 1px solid var(--color-border);
+  border-radius: var(--card-radius); box-shadow: var(--shadow-sm);
+}
+.card, .info-card, .settings-card { padding: var(--card-pad); }
+@media (min-width: 900px) { .card, .info-card, .settings-card { padding: var(--card-pad-lg); } }
+/* a card inside a card is a quiet inner surface: no shadow, smaller radius */
+.card .card, .card .nav-card, .card .settings-row { box-shadow: none; }
+.card .card { background: var(--color-surface-2); border-radius: var(--r-md); }
+.nav-card, .qh-item { transition: border-color var(--t-fast) ease, box-shadow var(--t-fast) ease, background-color var(--t-fast) ease; }
+.nav-card:hover, .qh-item:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-md); }
+.nav-card:active, .qh-item:active { background: var(--color-surface-pressed); }
+.nav-card:focus-visible, .qh-item:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.info-card-title { font-size: var(--font-size-lg); font-weight: var(--fw-head); color: var(--color-heading); }
+.card-title-icon { background: var(--color-primary-soft); color: var(--color-text-link); }
+.info-card-intro, .settings-row-sub, .text-muted { color: var(--color-text-secondary); }
+
+/* ---- 2. Home: heading + overall progress, then the unit grid ---- */
+.home-hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-sm); align-items: end; margin-bottom: var(--sp-sm); min-height: 0; }
+.home-brand { display: inline-block; margin-bottom: 2px; font-size: var(--font-size-xs); font-weight: var(--fw-bold); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-link); }
+.home-title { margin: 0 0 4px; line-height: 1.2; font-size: clamp(1.35rem, 3.4vw, 2rem); color: var(--color-heading); text-wrap: balance; }
+.home-sub { margin: 0; max-width: 52ch; font-size: var(--font-size-sm); line-height: 1.55; }
+.home-overall { padding: var(--sp-sm) var(--sp-md); background: var(--color-surface-1); border: 1px solid var(--color-border); border-radius: var(--card-radius); box-shadow: var(--shadow-sm); }
+.home-overall-top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-sm); margin-bottom: 6px; }
+.home-overall-pct { font-size: var(--font-size-xl); font-weight: var(--fw-head); font-variant-numeric: tabular-nums; color: var(--color-heading); }
+.home-overall-n { font-size: var(--font-size-xs); }
+@media (min-width: 760px) { .home-hero { grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); gap: var(--sp-lg); } }
+
+/* unit cards: icon + title/meta on the start side, progress along the bottom */
+.card-grid > .nav-card-unit { align-items: flex-start; }
+.nav-card-unit .nav-card-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.nav-card-unit .nav-card-title { font-size: var(--font-size-md); font-weight: var(--fw-head); color: var(--color-heading); }
+.nav-card-unit .unit-progress { margin-top: 6px; }
+.unit-states { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+
+/* word-state chips (Learned / Needs review / Not classified) */
+.state-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.state-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 22px; padding: 0 8px; border-radius: var(--r-pill); font-size: var(--font-size-xs); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; line-height: 1; border: 1px solid transparent; }
+.state-chip .icon { width: 13px; height: 13px; }
+.state-chip.st-learned { background: var(--state-learned-soft); color: var(--state-learned); }
+.state-chip.st-review { background: var(--state-review-soft); color: var(--state-review); }
+.state-chip.st-unclassified { background: var(--state-none-soft); color: var(--state-none); border-color: var(--color-border); }
+.group-states { display: none; }
+@media (min-width: 560px) { .group-states { display: inline-flex; } }
+.group-states .state-chip { min-height: 20px; padding: 0 6px; }
+
+/* ---- 3. Search: one deliberate focus ring on the pill (no inner rectangle), smaller, shorter results ---- */
+.search-box { min-height: 44px; padding: 2px var(--sp-md); margin-bottom: var(--sp-xs); box-shadow: none; }
+.search-box:focus-within { border-color: var(--color-border-focus); box-shadow: 0 0 0 3px var(--color-focus-halo); }
+.search-input, .search-input:focus, .search-input:focus-visible { outline: none; box-shadow: none; border: 0; background: transparent; -webkit-appearance: none; appearance: none; }
+.search-input { min-height: 40px; font-size: var(--font-size-md); }
+.search-results { max-height: min(44vh, 360px); overflow-y: auto; overscroll-behavior: contain; margin-bottom: var(--sp-xs); padding-inline-end: 2px; }
+.search-results .result-row { padding: 8px var(--sp-sm); margin-bottom: 4px; }
+
+/* ---- 4. Word cards: the state is visible on the card ---- */
+.word-card[data-state="learned"] .word-state-icon { color: var(--state-learned); }
+.word-card[data-state="review"] .word-state-icon { color: var(--state-review); }
+.word-card[data-state="unclassified"] .word-state-icon { color: var(--state-none); }
+.word-card[data-state="review"] { border-inline-start: 4px solid var(--state-review); }
+.word-card[data-state="learned"] { border-inline-start: 4px solid var(--state-learned); }
+
+/* ---- 5. Word Review: reasons, learned marker, the 3-second grace shown as a shrinking line ---- */
+.review-group-title { color: var(--color-heading); }
+.review-group-count { background: var(--state-review-soft); color: var(--state-review); }
+.reason-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.reason-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 20px; padding: 0 8px; border-radius: var(--r-pill); font-size: var(--font-size-xs); font-weight: var(--fw-bold); line-height: 1; }
+.reason-chip .icon { width: 12px; height: 12px; }
+.reason-chip.rs-manual { background: var(--state-review-soft); color: var(--state-review); }
+.reason-chip.rs-wrong, .reason-chip.rs-quiz { background: var(--state-wrong-soft); color: var(--state-wrong); }
+.reason-chip.rs-skipped { background: var(--color-info-soft); color: var(--color-info); }
+.reason-chip.rs-learned { background: var(--state-learned-soft); color: var(--state-learned); }
+.review-item { position: relative; }
+.review-item .review-flag.active { background: var(--state-review-soft); color: var(--state-review); border-color: var(--state-review); }
+.review-item.is-pending .review-flag { background: var(--color-surface-2); color: var(--color-text-secondary); }
+.pending-bar { position: absolute; inset-inline: 8px; bottom: 2px; height: 3px; border-radius: var(--r-pill); background: var(--state-review); transform-origin: left center; animation: pending-shrink 3s linear forwards; }
+[dir="rtl"] .pending-bar { transform-origin: right center; }
+@keyframes pending-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* ---- 6. Info: bands, wide cards with two-column lists, legend, shortcuts ---- */
+.info-band { margin-bottom: var(--sp-sm); }
+.info-wide { margin-bottom: var(--sp-sm); }
+@media (min-width: 900px) {
+  .info-wide .changelog, .info-wide .bugs-list { columns: 2; column-gap: var(--sp-lg); display: block; }
+  .info-wide .changelog > li, .info-wide .bugs-list > li { break-inside: avoid; margin-bottom: var(--sp-sm); }
+}
+.legend-group { margin: var(--sp-sm) 0 var(--sp-xs); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+.legend-group:first-of-type { margin-top: 0; }
+.legend-list, .sc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.legend-row { display: flex; gap: var(--sp-sm); align-items: flex-start; }
+.legend-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--r-md); background: var(--color-surface-2); color: var(--color-text-link); }
+.legend-icon .icon { width: 18px; height: 18px; }
+.legend-icon.lg-beta { background: var(--color-warning-soft); color: var(--color-warning); }
+.legend-icon.lg-learned, .legend-icon.lg-correct { background: var(--state-learned-soft); color: var(--state-learned); }
+.legend-icon.lg-review { background: var(--state-review-soft); color: var(--state-review); }
+.legend-icon.lg-none, .legend-icon.lg-skipped { background: var(--state-none-soft); color: var(--state-none); }
+.legend-icon.lg-near { background: var(--state-near-soft); color: var(--state-near); }
+.legend-icon.lg-wrong { background: var(--state-wrong-soft); color: var(--state-wrong); }
+.legend-name { font-weight: var(--fw-bold); }
+.legend-text .text-muted { font-size: var(--font-size-sm); line-height: 1.5; }
+.sc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); padding-bottom: 8px; border-bottom: 1px solid var(--color-divider); }
+.sc-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.sc-keys { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.sc-keys kbd { min-width: 28px; padding: 2px 8px; text-align: center; font-family: var(--font-main); font-size: var(--font-size-sm); font-weight: var(--fw-bold); color: var(--color-text-primary); background: var(--color-surface-2); border: 1px solid var(--color-border); border-bottom-width: 2px; border-radius: var(--r-sm); }
+.sc-action { text-align: end; font-size: var(--font-size-sm); line-height: 1.45; }
+.sc-note { margin: var(--sp-sm) 0 0; font-size: var(--font-size-sm); line-height: 1.5; }
+.beta-mark { background: var(--color-warning-soft); color: var(--color-warning); border-color: var(--color-warning); }
+.beta-mark .icon { width: 14px; height: 14px; }
+
+/* ---- 7. Natural highlighter: an uneven marker stroke (soft ends, a darker overlap along the
+   lower edge, slightly different corners), readable text, wraps cleanly across lines ---- */
+.hl {
+  padding: 0.05em 0.45em 0.1em; margin-inline: 0.08em; color: inherit;
+  border-radius: 0.7em 0.25em 0.65em 0.3em / 0.3em 0.65em 0.25em 0.6em;
+  background:
+    linear-gradient(176deg, transparent 0 62%, color-mix(in srgb, var(--hl) 38%, transparent) 62% 100%),
+    linear-gradient(103deg, transparent 0 0.8%, color-mix(in srgb, var(--hl) var(--hlt-alpha), transparent) 2.2% 97%, transparent 99.4%);
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.hl-purple, .hl-pink { border-radius: 0.3em 0.7em 0.3em 0.6em / 0.6em 0.3em 0.7em 0.3em; }
+.hl-green { border-radius: 0.6em 0.3em 0.7em 0.25em / 0.25em 0.7em 0.3em 0.65em; }
+
+/* ---- 8. Wide screens: use the width without stretching text ---- */
+@media (min-width: 1100px) { .masonry.info-band { columns: 3; } .settings-grid.masonry { columns: 2; } }
+@media (min-width: 1400px) { .settings-grid.masonry { columns: 3; } }

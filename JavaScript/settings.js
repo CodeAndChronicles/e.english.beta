@@ -273,7 +273,7 @@
       ]);
     }
     // "Default" is not a palette: it is the neutral look with no accent picked.
-    colorPicker.appendChild(paletteChip('default', T('Default'), 'swatch-default'));
+    colorPicker.appendChild(paletteChip('default', T('Grey'), 'swatch-default'));    // the default palette (stored value 'default')
     COLOR_ORDER.forEach(function (c) { colorPicker.appendChild(paletteChip(c, T(COLOR_LABELS[c]), 'swatch-' + c)); });
     // A saved palette from an earlier version is never removed or remapped behind
     // the person's back: it keeps working until they pick one of the seven.
@@ -285,7 +285,7 @@
         h('span', { text: T('Your current palette ({name}) is no longer offered. Pick one of the seven.', { name: T(COLOR_LABELS[cur0] || cur0) }) })
       ]);
     }
-    appearanceCard.appendChild(field('Accent color', 'Default is a neutral graphite. Pick a palette to use one accent everywhere.', colorPicker, retiredNote));
+    appearanceCard.appendChild(field('Accent color', 'Grey is the default. Pick a palette to use one accent everywhere.', colorPicker, retiredNote));
     markActiveColor();
 
     // Keep screen awake: ONE state (UX) + ONE routine (applyKeepAwake), also driven by

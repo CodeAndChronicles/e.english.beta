@@ -395,3 +395,47 @@
   /* the "Light & dark" tag shows both modes */
   --sample-mode-light: #F3F5F8; --sample-mode-dark: #1B2027;
 }
+
+
+/* ======================================================================
+   Version 11.3.4 — token families (aliases over the layers above, so every
+   theme and palette — Grey (default) included — reaches them automatically)
+   ====================================================================== */
+:root {
+  /* backgrounds */
+  --color-bg-page: var(--color-bg);
+  --color-bg-section: var(--color-surface-alt);
+  --color-bg-elevated: var(--color-surface);
+  /* surfaces */
+  --color-surface-1: var(--color-surface);
+  --color-surface-2: var(--color-surface-alt);
+  --color-surface-3: var(--color-mint);
+  --color-surface-hover: var(--color-mint);
+  --color-surface-pressed: var(--color-mint-strong);
+  /* text */
+  --color-text-disabled: var(--role-text-disabled);
+  --color-text-inverse: var(--color-primary-contrast);
+  --color-text-link: var(--color-ink);
+  /* borders */
+  --color-border-strong: var(--color-mint-strong);
+  --color-border-focus: var(--color-focus);
+  /* primary */
+  --color-primary-soft: var(--color-mint);
+  --color-primary-soft-strong: var(--color-mint-strong);
+  /* feedback: a text color and a soft background for each meaning */
+  --color-success-soft: var(--color-success-bg);
+  --color-error-soft: var(--color-danger-bg);
+  --color-warning-soft: var(--color-review-bg);
+  --color-info-soft: color-mix(in srgb, var(--color-info) 14%, var(--color-surface));
+  --color-review-soft: var(--color-review-bg);
+  /* focus, overlay, shadows that depend on the theme */
+  --color-focus-halo: color-mix(in srgb, var(--color-focus) 26%, transparent);
+  --color-overlay: color-mix(in srgb, var(--color-text) 42%, transparent);
+  --color-glass: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  /* word states (Learned / Needs review / Not classified) and quiz results */
+  --state-learned: var(--color-success);       --state-learned-soft: var(--color-success-bg);
+  --state-review: var(--color-review);         --state-review-soft: var(--color-review-bg);
+  --state-none: var(--color-text-muted);       --state-none-soft: var(--color-surface-alt);
+  --state-wrong: var(--color-danger);          --state-wrong-soft: var(--color-danger-bg);
+  --state-near: var(--color-info);             --state-near-soft: var(--color-info-soft);
+}

@@ -117,7 +117,7 @@
     'Font style': 'نمط الخط', 'Regular': 'عادي', 'Bold': 'عريض', 'Recommended': 'موصى به',
     'Bold headings, Regular text.': 'عناوين عريضة ونص عادي.', 'All text Regular.': 'كل النص عادي.', 'All text Bold.': 'كل النص عريض.',
     'Accent color': 'لون التمييز', 'Default': 'الافتراضي',
-    'Default is a neutral graphite. Pick a palette to use one accent everywhere.': 'الافتراضي رمادي فحمي محايد. اختر لوحة ألوان لاستخدام لون تمييز واحد في كل مكان.',
+    'Grey is the default. Pick a palette to use one accent everywhere.': 'الرمادي هو الافتراضي. اختر لوحة ألوان لاستخدام لون تمييز واحد في كل مكان.',
     'Burgundy': 'عنابي', 'Lavender': 'لافندر', 'Sky Blue': 'أزرق سماوي', 'Lime': 'ليموني', 'Orange': 'برتقالي', 'Teal': 'أزرق مخضر',
     'Midnight': 'أزرق ليلي', 'Plum': 'برقوقي', 'Petrol': 'بترولي', 'Umber': 'بني', 'Rose': 'وردي فاتح', 'Sand': 'رملي',
     'Your current palette ({name}) is no longer offered. Pick one of the seven.': 'لوحة الألوان الحالية ({name}) لم تعد متاحة. اختر واحدة من الألوان السبعة.',
@@ -131,7 +131,12 @@
     'Calculating...': 'جارٍ الحساب...',
 
     /* 11.2 */
-    'Auto': 'تلقائي', 'Design, development and learning content': 'التصميم والتطوير والمحتوى التعليمي', 'Steps, in order': 'الخطوات بالترتيب', 'Tips and alternatives (not steps)': 'نصائح وطرق بديلة (ليست خطوات إلزامية)', 'Clear search': 'مسح البحث', 'On': 'مفعّل', 'Off': 'متوقف', 'Behavior': 'السلوك', 'Loading': 'جارٍ التحميل', 'More': 'المزيد', 'Study': 'المذاكرة', 'Data management': 'إدارة البيانات',
+    'Auto': 'تلقائي',
+    'Your English vocabulary, unit by unit': 'مفردات الإنجليزية، وحدة بعد وحدة',
+    'Study, quiz and review at your own pace \u2014 everything stays on your device.': 'ذاكر واختبر وراجع بالسرعة التي تناسبك \u2014 وكل شيء يبقى على جهازك.',
+    '{n} words in total': 'إجمالي {n} كلمة', '{l} learned, {r} need review, {u} not classified': '{l} محفوظة، {r} تحتاج مراجعة، {u} بلا تصنيف',
+    'Needs review': 'تحتاج مراجعة', 'Not classified': 'بلا تصنيف', 'Grey': 'رمادي',
+    'Flagged by you': 'علّمتها بنفسك', 'Skipped in a quiz': 'تخطّيتها في اختبار', 'Missed in a quiz': 'أخطأت فيها في اختبار', 'Also marked learned': 'محفوظة أيضًا', 'Design, development and learning content': 'التصميم والتطوير والمحتوى التعليمي', 'Steps, in order': 'الخطوات بالترتيب', 'Tips and alternatives (not steps)': 'نصائح وطرق بديلة (ليست خطوات إلزامية)', 'Clear search': 'مسح البحث', 'On': 'مفعّل', 'Off': 'متوقف', 'Behavior': 'السلوك', 'Loading': 'جارٍ التحميل', 'More': 'المزيد', 'Study': 'المذاكرة', 'Data management': 'إدارة البيانات',
     'Back up your progress, restore it, or erase it from this device.': 'انسخ تقدمك احتياطيًا أو استعده أو امسحه من هذا الجهاز.',
     '{n} words in total \u00B7 {k} learned': 'إجمالي {n} كلمة \u00B7 المحفوظ {k}', 'Animations': 'الحركة', 'Smooth movement and transitions': 'حركة وانتقالات سلسة',
     'Your device asks for reduced motion, so animations stay off.': 'جهازك يطلب تقليل الحركة، لذلك تبقى الحركة متوقفة.',

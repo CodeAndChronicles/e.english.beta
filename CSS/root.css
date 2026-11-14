@@ -82,6 +82,10 @@
   /* ---- Layout ---- */
   --nav-height: 60px;
   --unit-card-h: 119px;      /* Home unit card height — the skeleton uses the same value */
+  --card-radius: var(--r-lg);   /* the card language: one radius, two paddings, one gap */
+  --card-pad: var(--sp-md);
+  --card-pad-lg: var(--sp-lg);
+  --card-gap: var(--sp-sm);
   --nav-gap: 8px;           /* the floating bottom bar's distance from the screen edge */
   --content-max-width: 720px;
 

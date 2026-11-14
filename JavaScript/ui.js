@@ -51,6 +51,17 @@
   function touchNarrow() {
     return !!(global.matchMedia && global.matchMedia('(pointer: coarse)').matches) && global.innerWidth < 1024;
   }
+  // Compact word-state summary: learned / needs review / not classified (unique words; the
+  // three always add up to the total). Same numbers everywhere (UX.getStateSummary).
+  function stateChips(sum) {
+    const items = [['learned', 'circle-check', 'Learned', sum.learned], ['review', 'flag', 'Needs review', sum.review], ['unclassified', 'circle-dashed', 'Not classified', sum.unclassified]];
+    const wrap = h('span', { class: 'state-chips', role: 'group', 'aria-label': T('{l} learned, {r} need review, {u} not classified', { l: sum.learned, r: sum.review, u: sum.unclassified }) });
+    items.forEach(function (it) {
+      wrap.appendChild(h('span', { class: 'state-chip st-' + it[0], title: T(it[2]) }, [icon(it[1]), h('span', { class: 'state-chip-n', text: String(it[3]) })]));
+    });
+    return wrap;
+  }
+  function fillChips(box, sum) { clear(box); box.appendChild(stateChips(sum)); }
   function tmin(s) { return String(s).replace(/\bmin\b/, T('min')); }   // "14–20 min" → Arabic unit
   // Pure formatting / labels only (no logic, no state) come from the quiz
   // engine so a score, a percentage or a clock is written the same everywhere.
@@ -62,7 +73,8 @@
   let lessonProgressRef = null; // { unit, lessonKey, fillEl, textEl } — live-updated, not rebuilt
   let lessonQuizRef = null; // { unit, lessonKey, selectedBtn, selectedMeta, hintEl } — Selected Quiz availability + estimate, live-updated
   let statsRefs = null; // live-updatable stats DOM refs, set by renderStatistics()
-  let unitProgressRefs = null; // unitNum → { fill, pct, bar } for the Home unit cards
+  let unitProgressRefs = null;
+  let homeOverallRefs = null;   // the overall bar on Home (updated live with the unit bars) // unitNum → { fill, pct, bar } for the Home unit cards
 
   // Both nav bars (bottom nav for phones, side nav for large screens) are
   // always kept in the same state — CSS alone decides which one is
@@ -438,12 +450,26 @@
     clear(el.screen);
     const units = UX.getUnits();
 
-    el.screen.appendChild(h('header', { class: 'app-header' }, [
-      h('div', {}, [
-        h('h1', { class: 'title-xl', text: 'E.English' }),
-        h('p', { class: 'text-muted', text: T('Choose a unit to start studying') })
+    // Heading: the brand as a small label, a purposeful title, one supporting line, and
+    // the overall progress (same numbers as Statistics) so Home answers "where am I?" at once.
+    const ov = UX.getStatistics().overall;
+    const heroFill = h('div', { class: 'progress-fill' });
+    growFill(heroFill, pct(ov.progress));
+    el.screen.appendChild(h('header', { class: 'app-header home-hero' }, [
+      h('div', { class: 'home-hero-text' }, [
+        h('span', { class: 'home-brand', text: 'E.English' }),
+        h('h1', { class: 'title-xl home-title', text: T('Your English vocabulary, unit by unit') }),
+        h('p', { class: 'text-muted home-sub', text: T('Study, quiz and review at your own pace \u2014 everything stays on your device.') })
+      ]),
+      h('div', { class: 'home-overall', role: 'group', 'aria-label': T('Overall progress') }, [
+        h('div', { class: 'home-overall-top' }, [
+          h('span', { class: 'home-overall-pct', text: pctLabel(ov.progress) }),
+          h('span', { class: 'home-overall-n text-muted', text: T('{k} of {n} words learned', { k: ov.known, n: ov.total }) })
+        ]),
+        h('div', { class: 'progress-bar progress-sm', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(ov.progress * 100)), 'aria-label': T('Overall progress') }, [heroFill])
       ])
     ]));
+    homeOverallRefs = { fill: heroFill, pct: el.screen.querySelector('.home-overall-pct'), n: el.screen.querySelector('.home-overall-n') };
 
     const searchBox = h('div', { class: 'search-box' });
     searchBox.appendChild(icon('search', 'search-icon'));
@@ -474,7 +500,9 @@
         const bar = h('div', { class: 'progress-bar progress-sm', role: 'progressbar', 'aria-label': T('Unit ') + unit.unit + ' ' + T('progress'), 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(prog.progress * 100)) }, [fill]);
         const pctEl = h('span', { class: 'unit-progress-pct', text: pctLabel(prog.progress) });
         const vocabEl = h('div', { class: 'nav-card-sub unit-vocab' });
-        unitProgressRefs[unit.unit] = { fill: fill, pct: pctEl, bar: bar, vocab: vocabEl };
+        const chipsEl = h('div', { class: 'unit-states' });
+        fillChips(chipsEl, UX.getUnitStateSummary(unit.unit));
+        unitProgressRefs[unit.unit] = { fill: fill, pct: pctEl, bar: bar, vocab: vocabEl, chips: chipsEl };
         setVocabText(vocabEl, prog);
         list.appendChild(h('button', { class: 'nav-card nav-card-unit tone-blue', onclick: function () { renderUnit(unit.unit); } }, [
           icon('library', 'nav-card-icon'),
@@ -482,6 +510,7 @@
             h('div', { class: 'nav-card-title', text: T('Unit ') + unit.unit }),
             h('div', { class: 'nav-card-sub', text: plural(unit.lessons.length, 'lesson set', 'lesson sets') }),
             vocabEl,
+            chipsEl,
             h('div', { class: 'unit-progress' }, [bar, pctEl])
           ]),
           icon('chevron-right', 'nav-card-chevron')
@@ -548,7 +577,8 @@
         icon('notebook-text', 'nav-card-icon tone-blue'),
         h('div', { class: 'nav-card-text' }, [
           h('div', { class: 'nav-card-title', text: T('Lesson ') + lesson.lessons.join('-') }),
-          h('div', { class: 'nav-card-sub', text: plural(lesson.sections.length, 'section', 'sections') })
+          h('div', { class: 'nav-card-sub', text: plural(lesson.sections.length, 'section', 'sections') }),
+          (function () { const b = h('div', { class: 'unit-states' }); fillChips(b, UX.getUnitStateSummary(unitNum, key)); return b; })()
         ]),
         icon('chevron-right', 'nav-card-chevron')
       ]));
@@ -707,6 +737,7 @@
       cb,
       h('span', { class: 'group-title', text: group.title || (T('Group ') + (groupIdx + 1)) }),
       h('span', { class: 'group-count', text: known + '/' + wordIds.length }),
+      (function () { const b = h('span', { class: 'group-states' }); b.dataset.ids = wordIds.join('|'); fillChips(b, UX.getStateSummary(wordIds)); return b; })(),
       toggleBtn
     ]);
 
@@ -846,14 +877,17 @@
     const cb = card.querySelector('.cb-input');
     if (cb) cb.checked = known;
 
+    // The card shows ONE of three states (UX.getWordState): learned / needs review / not classified.
+    const st = UX.getWordState(id);
+    card.setAttribute('data-state', st);
     const stateIcon = card.querySelector('.word-state-icon');
-    if (stateIcon && stateIcon.dataset.known !== String(known)) {
-      stateIcon.dataset.known = String(known);
+    if (stateIcon && stateIcon.dataset.state !== st) {
+      stateIcon.dataset.state = st;
       clear(stateIcon);
-      stateIcon.appendChild(icon(known ? 'circle-check' : 'circle-dashed'));
+      stateIcon.appendChild(icon(st === 'learned' ? 'circle-check' : (st === 'review' ? 'flag' : 'circle-dashed')));
     }
     const stateText = card.querySelector('.word-state-text');
-    if (stateText) stateText.textContent = known ? T('Learned') : T('Not learned');
+    if (stateText) stateText.textContent = st === 'learned' ? T('Learned') : (st === 'review' ? T('Needs review') : T('Not classified'));
 
     const flag = card.querySelector('.flag-btn');
     if (flag) {
@@ -879,6 +913,8 @@
         const known = wordIds.filter(function (id) { return UX.isKnown(id); }).length;
         countEl.textContent = known + '/' + wordIds.length;
       }
+      const chips = g.querySelector('.group-states');
+      if (chips) fillChips(chips, UX.getStateSummary(wordIds));
     });
     refreshLessonProgress();
     refreshQuizButtons();
@@ -942,6 +978,19 @@
     }, 3000);
     UX.toggleReview(id);
   }
+  // WHY a word is in Review — three different things, never merged: the learner flagged it by
+  // hand, or a quiz answer was wrong, or a quiz question was skipped. A learned word that a
+  // quiz flagged keeps its learned mark and says so.
+  function reasonChips(id) {
+    const src = UX.getReviewReason(id);          // 'manual' | 'wrong' | 'skipped' | 'quiz' | null
+    const box = h('span', { class: 'reason-chips' });
+    if (src) {
+      const label = src === 'manual' ? 'Flagged by you' : (src === 'skipped' ? 'Skipped in a quiz' : 'Missed in a quiz');
+      box.appendChild(h('span', { class: 'reason-chip rs-' + src, text: T(label) }));
+    }
+    if (UX.isKnown(id)) box.appendChild(h('span', { class: 'reason-chip rs-learned' }, [icon('circle-check'), h('span', { text: T('Also marked learned') })]));
+    return box;
+  }
   function reviewItem(r, flagged) {
     const meta = sectionMeta(r.type);
     const has = r.meaning && String(r.meaning).trim();
@@ -957,11 +1006,13 @@
         icon(meta.icon, 'result-icon ' + meta.className),
         h('div', { class: 'result-text' }, [
           h('span', { class: 'result-word', dir: 'ltr', text: r.word }),
-          h('span', { class: 'result-meaning' + (has ? '' : ' text-muted'), dir: 'auto', text: has ? r.meaning : T('No translation') })
+          h('span', { class: 'result-meaning' + (has ? '' : ' text-muted'), dir: 'auto', text: has ? r.meaning : T('No translation') }),
+          reasonChips(r.wordId)
         ]),
         h('span', { class: 'result-loc', text: 'L' + r.lessons.join('-') })
       ]),
-      flag
+      flag,
+      flagged ? null : h('span', { class: 'pending-bar', 'aria-hidden': 'true' })
     ]);
   }
   function renderReviewInto(container, stats) {
@@ -999,9 +1050,17 @@
   // straight from UX.getUnitProgress — the same numbers Statistics uses.
   function setVocabText(node, p) {
     node.hidden = !p.total;
-    node.textContent = T('{n} words in total \u00B7 {k} learned', { k: p.known, n: p.total });
+    node.textContent = T('{n} words in total', { n: p.total });
+  }
+  function refreshHomeOverall() {
+    if (!homeOverallRefs || !homeOverallRefs.pct || !homeOverallRefs.pct.isConnected) return;
+    const ov = UX.getStatistics().overall;
+    homeOverallRefs.fill.style.width = pct(ov.progress);
+    homeOverallRefs.pct.textContent = pctLabel(ov.progress);
+    homeOverallRefs.n.textContent = T('{k} of {n} words learned', { k: ov.known, n: ov.total });
   }
   function refreshUnitProgress() {
+    refreshHomeOverall();
     if (!unitProgressRefs) return;
     Object.keys(unitProgressRefs).forEach(function (u) {
       const r = unitProgressRefs[u], p = UX.getUnitProgress(Number(u));
@@ -1009,6 +1068,7 @@
       r.pct.textContent = pctLabel(p.progress);
       r.bar.setAttribute('aria-valuenow', String(Math.round(p.progress * 100)));
       if (r.vocab) setVocabText(r.vocab, p);
+      if (r.chips) fillChips(r.chips, UX.getUnitStateSummary(Number(u)));
     });
   }
 
@@ -1644,7 +1704,35 @@
   ];
   // The owner's note under the legend — his own words, kept exactly.
   const HL_NOTE = 'لا تستخدم نفس أو ألوانًا متشابهة بشكل متكرر لمفاهيم مختلفة، لأن ذلك قد يجعل العقل يخلط بينها. مثال: إذا كنت تستخدم القلم الأحمر للكلمات الصعبة، فمن الأفضل ألا تستخدم Highlighter أحمر لنفس الكلمات. استخدم مثلًا الأصفر أو الأخضر أو البنفسجي بدلًا منه.';
-  const HL_CLASS = { y: 'hl hl-yellow', g: 'hl hl-green', v: 'hl hl-purple', p: 'hl hl-pink', pb: 'pen pen-blue', pr: 'pen pen-red', pk: 'pen pen-black', s1: 'hl hl-yellow hl-syl', s2: 'hl hl-purple hl-syl' };
+
+  // English version of the Study Method — the same instructions in the same order, written as
+  // natural English (not word for word). Shown when the interface language is English.
+  const STUDY_METHOD_EN = [
+    { k: 'lead', x: 'Here are some study methods, for anyone who would like to try them.' },
+    { k: 'p', x: 'Get a sheet of paper and some pens ({pr|red} - {pk|black} - {pb|blue}). For the easy words, which you will memorize in {pb|blue}, write the word with {y|3 Arabic words}, read its pronunciation and write it out. As soon as you reach a hard word, write it in {pr|red} so it stands out.' },
+    { k: 'p', x: 'Next, write it beside the word or under it, twice, split into syllables. For example, for the word (Individuals), write {s1|indivi} in one color and {s2|duals} in a different color, side by side, and repeat it twice.' },
+    { k: 'p', x: 'Then memorize {v|3 or 4 groups} this way. After that, give your mind a {v|5-minute} break \u2014 no more and no less.' },
+    { k: 'p', x: 'Then take {p|a blank sheet} and write all the Arabic meanings in one go (for example 18 or 24 words, depending on how many groups you memorized). Now {g|recite the words to yourself}. It is normal to forget how to say or write a word or two the first time. After you check your answers, {g|recite again}, hide your first attempt, and test yourself once more.' },
+    { k: 'p', x: 'After reciting, if you find mistakes, mark them with a {p|highlighter} so they are clear in front of you, and also flag the word with the {p|Review button} under each word. Then memorize 3 or 4 more groups and recite those on their own too. When you finish reciting and have marked your mistakes the same way, {g|take the quiz} on all the groups you memorized.' },
+    { k: 'p', x: 'But before the quiz, do a {g|quick pronunciation review} of the words, test yourself, and keep going like this.' },
+    { k: 't', x: 'What if you keep forgetting the meaning of some words? What do you do?..' },
+    { k: 'p', x: 'Take that word and put it in a sentence in Arabic first, for example:' },
+    { k: 'ex', x: '(أنا ابدأ بلعب الكرة)' },
+    { k: 'p', x: 'Then write it in English:' },
+    { k: 'exen', x: "(I'm kick off playing ball)" },
+    { k: 'aside', x: 'It is only an example \u2014 even if it is not perfect, it gets the idea across \uD83D\uDE44' },
+    { k: 'p', x: 'After that, test yourself again with a short quiz on the site, on the words you picked.' },
+    { k: 'p', x: 'And {v|spread your memorizing over 4 days} \u2014 if you can memorize in fewer than 4 days, that is much better.' },
+    { k: 't', x: 'So how do you review?..' },
+    { k: 'p', x: 'Take a word, {y|hide the Arabic}, read the English, and see whether you remember the Arabic.' },
+    { k: 'p', x: 'When you finish, flip it: {y|hide the English} and see whether you remember it.' },
+    { k: 'p', x: 'If you remembered it and pronounced it correctly, you are good.' },
+    { k: 't', x: 'And if you cannot remember it?..' },
+    { k: 'p', x: '{y|Put it in an Arabic sentence and an English sentence} in your notebook too, and {p|highlight} it in a different color. Then {y|break it into syllables} and read it out right away.' },
+    { k: 'p', n: 1, x: 'And that is it \u2014 this is about the best way to memorize the words.' },
+    { k: 'p', n: 1, x: 'Of course, everyone is different, so you are not obliged to memorize the same way. If you have a method that feels comfortable for you, use it. What matters is that we have organized the words for you and made them much easier than before..' }
+  ];
+  const HL_NOTE_EN = 'Do not use the same color, or similar colors, again and again for different ideas, because it can make your mind mix them up. For example, if you use a red pen for hard words, it is better not to use a red highlighter for the same words. Use yellow, green or purple instead.';  const HL_CLASS = { y: 'hl hl-yellow', g: 'hl hl-green', v: 'hl hl-purple', p: 'hl hl-pink', pb: 'pen pen-blue', pr: 'pen pen-red', pk: 'pen pen-black', s1: 'hl hl-yellow hl-syl', s2: 'hl hl-purple hl-syl' };
 
   // Adds `text` to `parent`, turning {tag|phrase} tokens into highlight chips.
   function appendRich(parent, text) {
@@ -1670,25 +1758,28 @@
   // alternatives for particular situations (each one starts with its own question), so they are
   // NOT numbered — a dot marker instead — and the two closing remarks form a closing note.
   function renderStudyMethod() {
+    const en = global.I18n.getLang() === 'en';
+    const METHOD = en ? STUDY_METHOD_EN : STUDY_METHOD;
+    const DIR = en ? 'ltr' : 'rtl', LANG = en ? 'en' : 'ar';
     const stages = [];                       // { title, items: [li], closing: bool }
     let stage = null, last = null, lead = null;
     const closing = [];
     function open(title) { stage = { title: title, items: [] }; stages.push(stage); last = null; }
-    STUDY_METHOD.forEach(function (b) {
+    METHOD.forEach(function (b) {
       if (b.k === 'lead') { lead = appendRich(h('p', { class: 'study-lead' }), b.x); return; }
       if (b.k === 't') { open(b.x); return; }
       if (!stage) open(null);
       if (b.n) { closing.push(appendRich(h('p', { class: 'study-closing-p' }), b.x)); return; }
       if (b.k === 'p') { last = h('li', {}, [appendRich(h('p', { class: 'study-p' }), b.x)]); stage.items.push(last); return; }
       const attrs = { class: b.k === 'aside' ? 'study-aside' : (b.k === 'exen' ? 'study-example study-example-en' : 'study-example') };
-      if (b.k === 'exen') { attrs.dir = 'ltr'; attrs.lang = 'en'; }
+      if (b.k === 'exen') { attrs.dir = 'ltr'; attrs.lang = 'en'; } else if (b.k === 'ex') { attrs.dir = 'rtl'; attrs.lang = 'ar'; }   // the Arabic example sentence stays Arabic
       const node = appendRich(h('p', attrs), b.x);
       if (last) last.appendChild(node); else { last = h('li', {}, [node]); stage.items.push(last); }
     });
     function card(st, numbered) {
       const c = h('section', { class: 'card study-stage ' + (numbered ? 'is-steps' : 'is-tips') });
-      if (st.title) c.appendChild(appendRich(h('h3', { class: 'study-transition', dir: 'rtl', lang: 'ar' }), st.title));
-      const list = h(numbered ? 'ol' : 'ul', { class: numbered ? 'study-steps' : 'study-tips', dir: 'rtl', lang: 'ar' });
+      if (st.title) c.appendChild(appendRich(h('h3', { class: 'study-transition', dir: DIR, lang: LANG }), st.title));
+      const list = h(numbered ? 'ol' : 'ul', { class: numbered ? 'study-steps' : 'study-tips', dir: DIR, lang: LANG });
       st.items.forEach(function (li) { li.className = numbered ? 'study-step' : 'study-tip'; list.appendChild(li); });
       c.appendChild(list);
       return c;
@@ -1697,7 +1788,7 @@
     const kids = [h('h2', { class: 'section-heading' }, [
       h('span', { class: 'card-title-icon', 'aria-hidden': 'true' }, [icon('notebook-text')]), h('span', { text: T('Study method') })
     ])];
-    if (lead) kids.push(h('div', { class: 'card study-lead-card', dir: 'rtl', lang: 'ar' }, [lead]));
+    if (lead) kids.push(h('div', { class: 'card study-lead-card', dir: DIR, lang: LANG }, [lead]));
     if (stages.length) {
       kids.push(sub(T('Steps, in order')));
       kids.push(h('div', { class: 'study-grid masonry' }, [card(stages[0], true)]));
@@ -1706,9 +1797,9 @@
       kids.push(sub(T('Tips and alternatives (not steps)')));
       kids.push(h('div', { class: 'study-grid masonry' }, stages.slice(1).map(function (st) { return card(st, false); })));
     }
-    if (closing.length) kids.push(h('div', { class: 'card study-closing', dir: 'rtl', lang: 'ar' }, closing));
+    if (closing.length) kids.push(h('div', { class: 'card study-closing', dir: DIR, lang: LANG }, closing));
     // The educational note (the highlighter-colour legend/selector was removed).
-    kids.push(h('div', { class: 'card study-note-card', dir: 'rtl', lang: 'ar' }, [h('p', { class: 'hl-note', text: HL_NOTE })]));
+    kids.push(h('div', { class: 'card study-note-card', dir: DIR, lang: LANG }, [h('p', { class: 'hl-note', text: en ? HL_NOTE_EN : HL_NOTE })]));
     return h('section', { class: 'study-section', 'aria-label': T('Study method') }, kids);
   }
 
@@ -1737,7 +1828,15 @@
     card.appendChild(list);
     card.appendChild(h('p', { class: 'text-muted pos-note', text: T('Some words have two tags separated by a slash, such as n./v. That means the word can work as either one.') }));
     // Version, changelog and the purpose of the site live in JavaScript/pages.js.
-    if (global.UI && global.UI.buildAbout) page.appendChild(global.UI.buildAbout());
+    // Cards come from JavaScript/pages.js. Layout: a column band (Information, Icon Legend,
+    // Keyboard Shortcuts — each its own height), then What's New and Bugs Fixed as separate
+    // full-width cards whose long lists flow in two columns, then Study Method, Parts of Speech.
+    const C = (global.UI && global.UI.infoCards) || null;
+    if (C) {
+      page.appendChild(h('div', { class: 'info-band masonry' }, [C.information(), C.legend(), C.shortcuts()]));
+      page.appendChild(C.whatsNew());
+      page.appendChild(C.bugs());
+    }
     page.appendChild(renderStudyMethod());   // Study Method
     page.appendChild(card);                  // Parts of Speech
 
